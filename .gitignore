@@ -1,0 +1,26 @@
+# Runtime state
+known_products.json
+monitor.log
+
+# ECI investigation files
+eci_products.json
+eci_test.html
+eci_playwright.html
+eci_search.html
+eci_page.html
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
