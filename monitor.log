@@ -1,0 +1,307 @@
+2026-05-25 12:19:52 [INFO] monitor: ============================================================
+2026-05-25 12:19:52 [INFO] monitor: Stock Monitor started
+2026-05-25 12:19:52 [INFO] monitor: Sites      : continente, toysrus
+2026-05-25 12:19:52 [INFO] monitor: Interval   : 120s (2m 0s)
+2026-05-25 12:19:52 [INFO] monitor: State file : C:\Users\alberto.oliveira\Projetos\Stock fetch\restock-monitor\known_products.json
+2026-05-25 12:19:52 [INFO] monitor: Log file   : C:\Users\alberto.oliveira\Projetos\Stock fetch\restock-monitor\monitor.log
+2026-05-25 12:19:52 [INFO] monitor: Press Ctrl+C to stop
+2026-05-25 12:19:52 [INFO] monitor: ============================================================
+2026-05-25 12:19:52 [INFO] monitor: --- Checking continente ---
+2026-05-25 12:19:52 [INFO] scrapers.continente: Fetching Continente — https://www.continente.pt/pesquisa/?q=Pokemon&start=0&srule=Continente&pmin=0.01
+2026-05-25 12:20:28 [INFO] scrapers.continente: Continente: 36 tile(s) found
+2026-05-25 12:20:28 [INFO] scrapers.continente: Continente: 35 product(s) parsed
+2026-05-25 12:20:28 [INFO] state_manager: [continente] Baseline set: 35 product(s)
+2026-05-25 12:20:29 [INFO] monitor: --- Checking toysrus ---
+2026-05-25 12:20:29 [INFO] scrapers.toysrus: Fetching ToysRus — https://www.toysrus.pt/?query=pokemon%20tcg&scroll=K1066044
+2026-05-25 12:21:42 [WARNING] scrapers.toysrus: ToysRus: no product tiles found — site structure may have changed. Enable DEBUG logging to see the page snippet.
+2026-05-25 12:21:42 [WARNING] monitor: [toysrus] 0 products returned — skipping state update (site may be down or selectors need updating)
+2026-05-25 12:21:43 [INFO] monitor: Sleeping 120s until next check…
+2026-05-25 12:23:43 [INFO] monitor: --- Checking continente ---
+2026-05-25 12:23:43 [INFO] scrapers.continente: Fetching Continente — https://www.continente.pt/pesquisa/?q=Pokemon&start=0&srule=Continente&pmin=0.01
+2026-05-25 12:24:19 [INFO] scrapers.continente: Continente: 36 tile(s) found
+2026-05-25 12:24:19 [INFO] scrapers.continente: Continente: 35 product(s) parsed
+2026-05-25 12:24:19 [INFO] monitor: [continente] No changes
+2026-05-25 12:24:21 [INFO] monitor: --- Checking toysrus ---
+2026-05-25 12:24:21 [INFO] scrapers.toysrus: Fetching ToysRus — https://www.toysrus.pt/?query=pokemon%20tcg&scroll=K1066044
+2026-05-25 12:25:33 [WARNING] scrapers.toysrus: ToysRus: no product tiles found — site structure may have changed. Enable DEBUG logging to see the page snippet.
+2026-05-25 12:25:33 [WARNING] monitor: [toysrus] 0 products returned — skipping state update (site may be down or selectors need updating)
+2026-05-25 12:25:36 [INFO] monitor: Sleeping 120s until next check…
+2026-05-25 12:27:36 [INFO] monitor: --- Checking continente ---
+2026-05-25 12:27:36 [INFO] scrapers.continente: Fetching Continente — https://www.continente.pt/pesquisa/?q=Pokemon&start=0&srule=Continente&pmin=0.01
+2026-05-25 12:28:11 [INFO] scrapers.continente: Continente: 36 tile(s) found
+2026-05-25 12:28:11 [INFO] scrapers.continente: Continente: 35 product(s) parsed
+2026-05-25 12:28:11 [INFO] monitor: [continente] No changes
+2026-05-25 12:28:13 [INFO] monitor: --- Checking toysrus ---
+2026-05-25 12:28:13 [INFO] scrapers.toysrus: Fetching ToysRus — https://www.toysrus.pt/?query=pokemon%20tcg&scroll=K1066044
+2026-05-25 12:29:27 [WARNING] scrapers.toysrus: ToysRus: no product tiles found — site structure may have changed. Enable DEBUG logging to see the page snippet.
+2026-05-25 12:29:27 [WARNING] monitor: [toysrus] 0 products returned — skipping state update (site may be down or selectors need updating)
+2026-05-25 12:29:29 [INFO] monitor: Sleeping 120s until next check…
+2026-05-25 12:31:29 [INFO] monitor: --- Checking continente ---
+2026-05-25 12:31:29 [INFO] scrapers.continente: Fetching Continente — https://www.continente.pt/pesquisa/?q=Pokemon&start=0&srule=Continente&pmin=0.01
+2026-05-25 12:32:03 [INFO] scrapers.continente: Continente: 36 tile(s) found
+2026-05-25 12:32:03 [INFO] scrapers.continente: Continente: 35 product(s) parsed
+2026-05-25 12:32:03 [INFO] monitor: [continente] No changes
+2026-05-25 12:32:05 [INFO] monitor: --- Checking toysrus ---
+2026-05-25 12:32:05 [INFO] scrapers.toysrus: Fetching ToysRus — https://www.toysrus.pt/?query=pokemon%20tcg&scroll=K1066044
+2026-05-25 12:33:48 [WARNING] scrapers.toysrus: ToysRus: no product tiles found — site structure may have changed. Enable DEBUG logging to see the page snippet.
+2026-05-25 12:33:48 [WARNING] monitor: [toysrus] 0 products returned — skipping state update (site may be down or selectors need updating)
+2026-05-25 12:33:51 [INFO] monitor: Sleeping 120s until next check…
+2026-05-25 12:35:51 [INFO] monitor: --- Checking continente ---
+2026-05-25 12:35:51 [INFO] scrapers.continente: Fetching Continente — https://www.continente.pt/pesquisa/?q=Pokemon&start=0&srule=Continente&pmin=0.01
+2026-05-25 12:36:24 [INFO] scrapers.continente: Continente: 36 tile(s) found
+2026-05-25 12:36:24 [INFO] scrapers.continente: Continente: 35 product(s) parsed
+2026-05-25 12:36:24 [INFO] monitor: [continente] No changes
+2026-05-25 12:36:26 [INFO] monitor: --- Checking toysrus ---
+2026-05-25 12:36:26 [INFO] scrapers.toysrus: Fetching ToysRus — https://www.toysrus.pt/?query=pokemon%20tcg&scroll=K1066044
+2026-05-25 12:37:39 [WARNING] scrapers.toysrus: ToysRus: no product tiles found — site structure may have changed. Enable DEBUG logging to see the page snippet.
+2026-05-25 12:37:39 [WARNING] monitor: [toysrus] 0 products returned — skipping state update (site may be down or selectors need updating)
+2026-05-25 12:37:40 [INFO] monitor: Sleeping 120s until next check…
+2026-05-25 12:39:40 [INFO] monitor: --- Checking continente ---
+2026-05-25 12:39:40 [INFO] scrapers.continente: Fetching Continente — https://www.continente.pt/pesquisa/?q=Pokemon&start=0&srule=Continente&pmin=0.01
+2026-05-25 12:40:14 [INFO] scrapers.continente: Continente: 36 tile(s) found
+2026-05-25 12:40:14 [INFO] scrapers.continente: Continente: 35 product(s) parsed
+2026-05-25 12:40:14 [INFO] monitor: [continente] No changes
+2026-05-25 12:40:16 [INFO] monitor: --- Checking toysrus ---
+2026-05-25 12:40:16 [INFO] scrapers.toysrus: Fetching ToysRus — https://www.toysrus.pt/?query=pokemon%20tcg&scroll=K1066044
+2026-05-25 12:41:29 [WARNING] scrapers.toysrus: ToysRus: no product tiles found — site structure may have changed. Enable DEBUG logging to see the page snippet.
+2026-05-25 12:41:29 [WARNING] monitor: [toysrus] 0 products returned — skipping state update (site may be down or selectors need updating)
+2026-05-25 12:41:31 [INFO] monitor: Sleeping 120s until next check…
+2026-05-25 12:43:31 [INFO] monitor: --- Checking continente ---
+2026-05-25 12:43:31 [INFO] scrapers.continente: Fetching Continente — https://www.continente.pt/pesquisa/?q=Pokemon&start=0&srule=Continente&pmin=0.01
+2026-05-25 12:44:05 [INFO] scrapers.continente: Continente: 35 tile(s) found
+2026-05-25 12:44:05 [INFO] scrapers.continente: Continente: 34 product(s) parsed
+2026-05-25 12:44:05 [INFO] monitor: [continente] No changes
+2026-05-25 12:44:07 [INFO] monitor: --- Checking toysrus ---
+2026-05-25 12:44:07 [INFO] scrapers.toysrus: Fetching ToysRus — https://www.toysrus.pt/?query=pokemon%20tcg&scroll=K1066044
+2026-05-25 12:45:32 [WARNING] scrapers.toysrus: ToysRus: no product tiles found — site structure may have changed. Enable DEBUG logging to see the page snippet.
+2026-05-25 12:45:32 [WARNING] monitor: [toysrus] 0 products returned — skipping state update (site may be down or selectors need updating)
+2026-05-25 12:45:35 [INFO] monitor: Sleeping 120s until next check…
+2026-05-25 12:47:35 [INFO] monitor: --- Checking continente ---
+2026-05-25 12:47:35 [INFO] scrapers.continente: Fetching Continente — https://www.continente.pt/pesquisa/?q=Pokemon&start=0&srule=Continente&pmin=0.01
+2026-05-25 12:48:09 [INFO] scrapers.continente: Continente: 35 tile(s) found
+2026-05-25 12:48:09 [INFO] scrapers.continente: Continente: 34 product(s) parsed
+2026-05-25 12:48:09 [INFO] monitor: [continente] No changes
+2026-05-25 12:48:11 [INFO] monitor: --- Checking toysrus ---
+2026-05-25 12:48:11 [INFO] scrapers.toysrus: Fetching ToysRus — https://www.toysrus.pt/?query=pokemon%20tcg&scroll=K1066044
+2026-05-25 12:49:23 [WARNING] scrapers.toysrus: ToysRus: no product tiles found — site structure may have changed. Enable DEBUG logging to see the page snippet.
+2026-05-25 12:49:23 [WARNING] monitor: [toysrus] 0 products returned — skipping state update (site may be down or selectors need updating)
+2026-05-25 12:49:25 [INFO] monitor: Sleeping 120s until next check…
+2026-05-25 12:51:25 [INFO] monitor: --- Checking continente ---
+2026-05-25 12:51:25 [INFO] scrapers.continente: Fetching Continente — https://www.continente.pt/pesquisa/?q=Pokemon&start=0&srule=Continente&pmin=0.01
+2026-05-25 12:52:00 [INFO] scrapers.continente: Continente: 35 tile(s) found
+2026-05-25 12:52:00 [INFO] scrapers.continente: Continente: 34 product(s) parsed
+2026-05-25 12:52:00 [INFO] monitor: [continente] No changes
+2026-05-25 12:52:02 [INFO] monitor: --- Checking toysrus ---
+2026-05-25 12:52:02 [INFO] scrapers.toysrus: Fetching ToysRus — https://www.toysrus.pt/?query=pokemon%20tcg&scroll=K1066044
+2026-05-25 12:53:16 [WARNING] scrapers.toysrus: ToysRus: no product tiles found — site structure may have changed. Enable DEBUG logging to see the page snippet.
+2026-05-25 12:53:16 [WARNING] monitor: [toysrus] 0 products returned — skipping state update (site may be down or selectors need updating)
+2026-05-25 12:53:17 [INFO] monitor: Sleeping 120s until next check…
+2026-05-25 12:55:17 [INFO] monitor: --- Checking continente ---
+2026-05-25 12:55:17 [INFO] scrapers.continente: Fetching Continente — https://www.continente.pt/pesquisa/?q=Pokemon&start=0&srule=Continente&pmin=0.01
+2026-05-25 12:55:51 [INFO] scrapers.continente: Continente: 35 tile(s) found
+2026-05-25 12:55:52 [INFO] scrapers.continente: Continente: 34 product(s) parsed
+2026-05-25 12:55:52 [INFO] monitor: [continente] No changes
+2026-05-25 12:55:53 [INFO] monitor: --- Checking toysrus ---
+2026-05-25 12:55:53 [INFO] scrapers.toysrus: Fetching ToysRus — https://www.toysrus.pt/?query=pokemon%20tcg&scroll=K1066044
+2026-05-25 12:57:07 [WARNING] scrapers.toysrus: ToysRus: no product tiles found — site structure may have changed. Enable DEBUG logging to see the page snippet.
+2026-05-25 12:57:07 [WARNING] monitor: [toysrus] 0 products returned — skipping state update (site may be down or selectors need updating)
+2026-05-25 12:57:09 [INFO] monitor: Sleeping 120s until next check…
+2026-05-25 12:59:09 [INFO] monitor: --- Checking continente ---
+2026-05-25 12:59:09 [INFO] scrapers.continente: Fetching Continente — https://www.continente.pt/pesquisa/?q=Pokemon&start=0&srule=Continente&pmin=0.01
+2026-05-25 12:59:43 [INFO] scrapers.continente: Continente: 35 tile(s) found
+2026-05-25 12:59:43 [INFO] scrapers.continente: Continente: 34 product(s) parsed
+2026-05-25 12:59:43 [INFO] monitor: [continente] No changes
+2026-05-25 12:59:45 [INFO] monitor: --- Checking toysrus ---
+2026-05-25 12:59:45 [INFO] scrapers.toysrus: Fetching ToysRus — https://www.toysrus.pt/?query=pokemon%20tcg&scroll=K1066044
+2026-05-25 13:00:57 [WARNING] scrapers.toysrus: ToysRus: no product tiles found — site structure may have changed. Enable DEBUG logging to see the page snippet.
+2026-05-25 13:00:57 [WARNING] monitor: [toysrus] 0 products returned — skipping state update (site may be down or selectors need updating)
+2026-05-25 13:01:00 [INFO] monitor: Sleeping 120s until next check…
+2026-05-25 13:03:00 [INFO] monitor: --- Checking continente ---
+2026-05-25 13:03:00 [INFO] scrapers.continente: Fetching Continente — https://www.continente.pt/pesquisa/?q=Pokemon&start=0&srule=Continente&pmin=0.01
+2026-05-25 13:03:34 [INFO] scrapers.continente: Continente: 35 tile(s) found
+2026-05-25 13:03:35 [INFO] scrapers.continente: Continente: 34 product(s) parsed
+2026-05-25 13:03:35 [INFO] monitor: [continente] No changes
+2026-05-25 13:03:38 [INFO] monitor: --- Checking toysrus ---
+2026-05-25 13:03:38 [INFO] scrapers.toysrus: Fetching ToysRus — https://www.toysrus.pt/?query=pokemon%20tcg&scroll=K1066044
+2026-05-25 13:05:18 [WARNING] scrapers.toysrus: ToysRus: no product tiles found — site structure may have changed. Enable DEBUG logging to see the page snippet.
+2026-05-25 13:05:18 [WARNING] monitor: [toysrus] 0 products returned — skipping state update (site may be down or selectors need updating)
+2026-05-25 13:05:21 [INFO] monitor: Sleeping 120s until next check…
+2026-05-25 13:07:21 [INFO] monitor: --- Checking continente ---
+2026-05-25 13:07:21 [INFO] scrapers.continente: Fetching Continente — https://www.continente.pt/pesquisa/?q=Pokemon&start=0&srule=Continente&pmin=0.01
+2026-05-25 13:07:55 [INFO] scrapers.continente: Continente: 35 tile(s) found
+2026-05-25 13:07:55 [INFO] scrapers.continente: Continente: 34 product(s) parsed
+2026-05-25 13:07:55 [INFO] monitor: [continente] No changes
+2026-05-25 13:07:58 [INFO] monitor: --- Checking toysrus ---
+2026-05-25 13:07:58 [INFO] scrapers.toysrus: Fetching ToysRus — https://www.toysrus.pt/?query=pokemon%20tcg&scroll=K1066044
+2026-05-25 13:09:10 [WARNING] scrapers.toysrus: ToysRus: no product tiles found — site structure may have changed. Enable DEBUG logging to see the page snippet.
+2026-05-25 13:09:10 [WARNING] monitor: [toysrus] 0 products returned — skipping state update (site may be down or selectors need updating)
+2026-05-25 13:09:13 [INFO] monitor: Sleeping 120s until next check…
+2026-05-25 13:11:13 [INFO] monitor: --- Checking continente ---
+2026-05-25 13:11:13 [INFO] scrapers.continente: Fetching Continente — https://www.continente.pt/pesquisa/?q=Pokemon&start=0&srule=Continente&pmin=0.01
+2026-05-25 13:11:47 [INFO] scrapers.continente: Continente: 35 tile(s) found
+2026-05-25 13:11:47 [INFO] scrapers.continente: Continente: 34 product(s) parsed
+2026-05-25 13:11:47 [INFO] monitor: [continente] No changes
+2026-05-25 13:11:49 [INFO] monitor: --- Checking toysrus ---
+2026-05-25 13:11:49 [INFO] scrapers.toysrus: Fetching ToysRus — https://www.toysrus.pt/?query=pokemon%20tcg&scroll=K1066044
+2026-05-25 13:13:02 [WARNING] scrapers.toysrus: ToysRus: no product tiles found — site structure may have changed. Enable DEBUG logging to see the page snippet.
+2026-05-25 13:13:02 [WARNING] monitor: [toysrus] 0 products returned — skipping state update (site may be down or selectors need updating)
+2026-05-25 13:13:04 [INFO] monitor: Sleeping 120s until next check…
+2026-05-25 13:15:04 [INFO] monitor: --- Checking continente ---
+2026-05-25 13:15:04 [INFO] scrapers.continente: Fetching Continente — https://www.continente.pt/pesquisa/?q=Pokemon&start=0&srule=Continente&pmin=0.01
+2026-05-25 13:15:38 [INFO] scrapers.continente: Continente: 35 tile(s) found
+2026-05-25 13:15:38 [INFO] scrapers.continente: Continente: 34 product(s) parsed
+2026-05-25 13:15:38 [INFO] monitor: [continente] No changes
+2026-05-25 13:15:40 [INFO] monitor: --- Checking toysrus ---
+2026-05-25 13:15:40 [INFO] scrapers.toysrus: Fetching ToysRus — https://www.toysrus.pt/?query=pokemon%20tcg&scroll=K1066044
+2026-05-25 13:16:53 [WARNING] scrapers.toysrus: ToysRus: no product tiles found — site structure may have changed. Enable DEBUG logging to see the page snippet.
+2026-05-25 13:16:53 [WARNING] monitor: [toysrus] 0 products returned — skipping state update (site may be down or selectors need updating)
+2026-05-25 13:16:56 [INFO] monitor: Sleeping 120s until next check…
+2026-05-25 13:18:56 [INFO] monitor: --- Checking continente ---
+2026-05-25 13:18:56 [INFO] scrapers.continente: Fetching Continente — https://www.continente.pt/pesquisa/?q=Pokemon&start=0&srule=Continente&pmin=0.01
+2026-05-25 13:19:30 [INFO] scrapers.continente: Continente: 35 tile(s) found
+2026-05-25 13:19:30 [INFO] scrapers.continente: Continente: 34 product(s) parsed
+2026-05-25 13:19:30 [INFO] monitor: [continente] No changes
+2026-05-25 13:19:32 [INFO] monitor: --- Checking toysrus ---
+2026-05-25 13:19:32 [INFO] scrapers.toysrus: Fetching ToysRus — https://www.toysrus.pt/?query=pokemon%20tcg&scroll=K1066044
+2026-05-25 13:20:44 [WARNING] scrapers.toysrus: ToysRus: no product tiles found — site structure may have changed. Enable DEBUG logging to see the page snippet.
+2026-05-25 13:20:44 [WARNING] monitor: [toysrus] 0 products returned — skipping state update (site may be down or selectors need updating)
+2026-05-25 13:20:47 [INFO] monitor: Sleeping 120s until next check…
+2026-05-25 13:22:47 [INFO] monitor: --- Checking continente ---
+2026-05-25 13:22:47 [INFO] scrapers.continente: Fetching Continente — https://www.continente.pt/pesquisa/?q=Pokemon&start=0&srule=Continente&pmin=0.01
+2026-05-25 13:23:22 [INFO] scrapers.continente: Continente: 35 tile(s) found
+2026-05-25 13:23:22 [INFO] scrapers.continente: Continente: 34 product(s) parsed
+2026-05-25 13:23:22 [INFO] monitor: [continente] No changes
+2026-05-25 13:23:25 [INFO] monitor: --- Checking toysrus ---
+2026-05-25 13:23:25 [INFO] scrapers.toysrus: Fetching ToysRus — https://www.toysrus.pt/?query=pokemon%20tcg&scroll=K1066044
+2026-05-25 13:24:37 [WARNING] scrapers.toysrus: ToysRus: no product tiles found — site structure may have changed. Enable DEBUG logging to see the page snippet.
+2026-05-25 13:24:37 [WARNING] monitor: [toysrus] 0 products returned — skipping state update (site may be down or selectors need updating)
+2026-05-25 13:24:40 [INFO] monitor: Sleeping 120s until next check…
+2026-05-25 13:26:40 [INFO] monitor: --- Checking continente ---
+2026-05-25 13:26:40 [INFO] scrapers.continente: Fetching Continente — https://www.continente.pt/pesquisa/?q=Pokemon&start=0&srule=Continente&pmin=0.01
+2026-05-25 13:27:14 [INFO] scrapers.continente: Continente: 35 tile(s) found
+2026-05-25 13:27:14 [INFO] scrapers.continente: Continente: 34 product(s) parsed
+2026-05-25 13:27:14 [INFO] monitor: [continente] No changes
+2026-05-25 13:27:17 [INFO] monitor: --- Checking toysrus ---
+2026-05-25 13:27:17 [INFO] scrapers.toysrus: Fetching ToysRus — https://www.toysrus.pt/?query=pokemon%20tcg&scroll=K1066044
+2026-05-25 13:28:30 [WARNING] scrapers.toysrus: ToysRus: no product tiles found — site structure may have changed. Enable DEBUG logging to see the page snippet.
+2026-05-25 13:28:30 [WARNING] monitor: [toysrus] 0 products returned — skipping state update (site may be down or selectors need updating)
+2026-05-25 13:28:33 [INFO] monitor: Sleeping 120s until next check…
+2026-05-25 13:30:33 [INFO] monitor: --- Checking continente ---
+2026-05-25 13:30:33 [INFO] scrapers.continente: Fetching Continente — https://www.continente.pt/pesquisa/?q=Pokemon&start=0&srule=Continente&pmin=0.01
+2026-05-25 13:31:07 [INFO] scrapers.continente: Continente: 35 tile(s) found
+2026-05-25 13:31:07 [INFO] scrapers.continente: Continente: 34 product(s) parsed
+2026-05-25 13:31:07 [INFO] monitor: [continente] No changes
+2026-05-25 13:31:09 [INFO] monitor: --- Checking toysrus ---
+2026-05-25 13:31:09 [INFO] scrapers.toysrus: Fetching ToysRus — https://www.toysrus.pt/?query=pokemon%20tcg&scroll=K1066044
+2026-05-25 13:31:46 [INFO] monitor: Shutdown signal received. Goodbye.
+2026-05-25 14:09:46 [INFO] monitor: Shutdown signal received. Goodbye.
+2026-05-25 14:09:46 [ERROR] asyncio: Future exception was never retrieved
+future: <Future finished exception=TargetClosedError('Target page, context or browser has been closed')>
+playwright._impl._errors.TargetClosedError: Target page, context or browser has been closed
+2026-05-25 14:09:46 [ERROR] asyncio: Future exception was never retrieved
+future: <Future finished exception=TargetClosedError('Target page, context or browser has been closed')>
+playwright._impl._errors.TargetClosedError: Target page, context or browser has been closed
+2026-05-25 14:11:16 [INFO] monitor: ============================================================
+2026-05-25 14:11:16 [INFO] monitor: Stock Monitor started
+2026-05-25 14:11:16 [INFO] monitor: Sites      : continente, toysrus, creativetoys
+2026-05-25 14:11:16 [INFO] monitor: Interval   : 90–150s (randomised)
+2026-05-25 14:11:16 [INFO] monitor: State file : C:\Users\alberto.oliveira\Projetos\Stock fetch\restock-monitor\known_products.json
+2026-05-25 14:11:16 [INFO] monitor: Log file   : C:\Users\alberto.oliveira\Projetos\Stock fetch\restock-monitor\monitor.log
+2026-05-25 14:11:16 [INFO] monitor: Press Ctrl+C to stop
+2026-05-25 14:11:16 [INFO] monitor: ============================================================
+2026-05-25 14:11:16 [INFO] monitor: --- Checking continente ---
+2026-05-25 14:11:16 [INFO] scrapers.continente: Fetching Continente — https://www.continente.pt/pesquisa/?q=Pokemon&start=0&srule=Continente&pmin=0.01
+2026-05-25 14:11:17 [INFO] scrapers.continente: Continente: 35 tile(s) found
+2026-05-25 14:11:17 [INFO] scrapers.continente: Continente: 35 product(s) parsed
+2026-05-25 14:11:17 [INFO] state_manager: [continente] Baseline set: 35 product(s)
+2026-05-25 14:11:19 [INFO] monitor: --- Checking toysrus ---
+2026-05-25 14:11:19 [INFO] scrapers.toysrus: Fetching ToysRus via Empathy API (query='pokemon')
+2026-05-25 14:11:19 [INFO] scrapers.toysrus: ToysRus: page start=0 → 100 product(s)
+2026-05-25 14:11:19 [INFO] scrapers.toysrus: ToysRus: page start=100 → 100 product(s)
+2026-05-25 14:11:20 [INFO] scrapers.toysrus: ToysRus: page start=200 → 90 product(s)
+2026-05-25 14:11:20 [INFO] scrapers.toysrus: ToysRus: no more products at start=290
+2026-05-25 14:11:20 [INFO] scrapers.toysrus: ToysRus: 290 total product(s) fetched
+2026-05-25 14:11:20 [INFO] state_manager: [toysrus] Baseline set: 290 product(s)
+2026-05-25 14:11:23 [INFO] monitor: --- Checking creativetoys ---
+2026-05-25 14:11:23 [INFO] scrapers.creativetoys: Fetching CreativeToys via Shopify API (https://creativetoys.pt/collections/trading-card-games/products.json)
+2026-05-25 14:11:23 [INFO] scrapers.creativetoys: CreativeToys: page 1 → 39 product(s)
+2026-05-25 14:11:23 [INFO] scrapers.creativetoys: CreativeToys: 39 total product(s) fetched
+2026-05-25 14:11:23 [INFO] state_manager: [creativetoys] Baseline set: 39 product(s)
+2026-05-25 14:11:25 [INFO] monitor: Sleeping 138s until next check…
+2026-05-25 14:13:43 [INFO] monitor: --- Checking continente ---
+2026-05-25 14:13:43 [INFO] scrapers.continente: Fetching Continente — https://www.continente.pt/pesquisa/?q=Pokemon&start=0&srule=Continente&pmin=0.01
+2026-05-25 14:13:44 [INFO] scrapers.continente: Continente: 35 tile(s) found
+2026-05-25 14:13:44 [INFO] scrapers.continente: Continente: 35 product(s) parsed
+2026-05-25 14:13:44 [INFO] monitor: [continente] No changes
+2026-05-25 14:13:45 [INFO] monitor: --- Checking toysrus ---
+2026-05-25 14:13:45 [INFO] scrapers.toysrus: Fetching ToysRus via Empathy API (query='pokemon')
+2026-05-25 14:13:46 [INFO] scrapers.toysrus: ToysRus: page start=0 → 100 product(s)
+2026-05-25 14:13:46 [INFO] scrapers.toysrus: ToysRus: page start=100 → 100 product(s)
+2026-05-25 14:13:46 [INFO] scrapers.toysrus: ToysRus: page start=200 → 90 product(s)
+2026-05-25 14:13:46 [INFO] scrapers.toysrus: ToysRus: no more products at start=290
+2026-05-25 14:13:46 [INFO] scrapers.toysrus: ToysRus: 290 total product(s) fetched
+2026-05-25 14:13:46 [INFO] monitor: [toysrus] No changes
+2026-05-25 14:13:48 [INFO] monitor: --- Checking creativetoys ---
+2026-05-25 14:13:48 [INFO] scrapers.creativetoys: Fetching CreativeToys via Shopify API (https://creativetoys.pt/collections/trading-card-games/products.json)
+2026-05-25 14:13:48 [INFO] scrapers.creativetoys: CreativeToys: page 1 → 39 product(s)
+2026-05-25 14:13:48 [INFO] scrapers.creativetoys: CreativeToys: 39 total product(s) fetched
+2026-05-25 14:13:48 [INFO] monitor: [creativetoys] No changes
+2026-05-25 14:13:50 [INFO] monitor: Sleeping 98s until next check…
+2026-05-25 14:15:28 [INFO] monitor: --- Checking continente ---
+2026-05-25 14:15:28 [INFO] scrapers.continente: Fetching Continente — https://www.continente.pt/pesquisa/?q=Pokemon&start=0&srule=Continente&pmin=0.01
+2026-05-25 14:15:29 [INFO] scrapers.continente: Continente: 35 tile(s) found
+2026-05-25 14:15:29 [INFO] scrapers.continente: Continente: 35 product(s) parsed
+2026-05-25 14:15:29 [INFO] monitor: [continente] No changes
+2026-05-25 14:15:31 [INFO] monitor: --- Checking toysrus ---
+2026-05-25 14:15:31 [INFO] scrapers.toysrus: Fetching ToysRus via Empathy API (query='pokemon')
+2026-05-25 14:15:31 [INFO] scrapers.toysrus: ToysRus: page start=0 → 100 product(s)
+2026-05-25 14:15:31 [INFO] scrapers.toysrus: ToysRus: page start=100 → 100 product(s)
+2026-05-25 14:15:31 [INFO] scrapers.toysrus: ToysRus: page start=200 → 90 product(s)
+2026-05-25 14:15:31 [INFO] scrapers.toysrus: ToysRus: no more products at start=290
+2026-05-25 14:15:31 [INFO] scrapers.toysrus: ToysRus: 290 total product(s) fetched
+2026-05-25 14:15:31 [INFO] monitor: [toysrus] No changes
+2026-05-25 14:15:34 [INFO] monitor: --- Checking creativetoys ---
+2026-05-25 14:15:34 [INFO] scrapers.creativetoys: Fetching CreativeToys via Shopify API (https://creativetoys.pt/collections/trading-card-games/products.json)
+2026-05-25 14:15:34 [INFO] scrapers.creativetoys: CreativeToys: page 1 → 39 product(s)
+2026-05-25 14:15:34 [INFO] scrapers.creativetoys: CreativeToys: 39 total product(s) fetched
+2026-05-25 14:15:34 [INFO] monitor: [creativetoys] No changes
+2026-05-25 14:15:36 [INFO] monitor: Sleeping 117s until next check…
+2026-05-25 14:17:33 [INFO] monitor: --- Checking continente ---
+2026-05-25 14:17:33 [INFO] scrapers.continente: Fetching Continente — https://www.continente.pt/pesquisa/?q=Pokemon&start=0&srule=Continente&pmin=0.01
+2026-05-25 14:17:34 [INFO] scrapers.continente: Continente: 35 tile(s) found
+2026-05-25 14:17:34 [INFO] scrapers.continente: Continente: 35 product(s) parsed
+2026-05-25 14:17:34 [INFO] monitor: [continente] No changes
+2026-05-25 14:17:36 [INFO] monitor: --- Checking toysrus ---
+2026-05-25 14:17:36 [INFO] scrapers.toysrus: Fetching ToysRus via Empathy API (query='pokemon')
+2026-05-25 14:17:36 [INFO] scrapers.toysrus: ToysRus: page start=0 → 100 product(s)
+2026-05-25 14:17:37 [INFO] scrapers.toysrus: ToysRus: page start=100 → 100 product(s)
+2026-05-25 14:17:37 [INFO] scrapers.toysrus: ToysRus: page start=200 → 90 product(s)
+2026-05-25 14:17:37 [INFO] scrapers.toysrus: ToysRus: no more products at start=290
+2026-05-25 14:17:37 [INFO] scrapers.toysrus: ToysRus: 290 total product(s) fetched
+2026-05-25 14:17:37 [INFO] monitor: [toysrus] No changes
+2026-05-25 14:17:39 [INFO] monitor: --- Checking creativetoys ---
+2026-05-25 14:17:39 [INFO] scrapers.creativetoys: Fetching CreativeToys via Shopify API (https://creativetoys.pt/collections/trading-card-games/products.json)
+2026-05-25 14:17:39 [INFO] scrapers.creativetoys: CreativeToys: page 1 → 39 product(s)
+2026-05-25 14:17:39 [INFO] scrapers.creativetoys: CreativeToys: 39 total product(s) fetched
+2026-05-25 14:17:39 [INFO] monitor: [creativetoys] No changes
+2026-05-25 14:17:42 [INFO] monitor: Sleeping 132s until next check…
+2026-05-25 14:19:54 [INFO] monitor: --- Checking continente ---
+2026-05-25 14:19:54 [INFO] scrapers.continente: Fetching Continente — https://www.continente.pt/pesquisa/?q=Pokemon&start=0&srule=Continente&pmin=0.01
+2026-05-25 14:19:55 [INFO] scrapers.continente: Continente: 35 tile(s) found
+2026-05-25 14:19:55 [INFO] scrapers.continente: Continente: 35 product(s) parsed
+2026-05-25 14:19:55 [INFO] monitor: [continente] No changes
+2026-05-25 14:19:57 [INFO] monitor: --- Checking toysrus ---
+2026-05-25 14:19:57 [INFO] scrapers.toysrus: Fetching ToysRus via Empathy API (query='pokemon')
+2026-05-25 14:19:57 [INFO] scrapers.toysrus: ToysRus: page start=0 → 100 product(s)
+2026-05-25 14:19:57 [INFO] scrapers.toysrus: ToysRus: page start=100 → 100 product(s)
+2026-05-25 14:19:57 [INFO] scrapers.toysrus: ToysRus: page start=200 → 90 product(s)
+2026-05-25 14:19:57 [INFO] scrapers.toysrus: ToysRus: no more products at start=290
+2026-05-25 14:19:57 [INFO] scrapers.toysrus: ToysRus: 290 total product(s) fetched
+2026-05-25 14:19:57 [INFO] monitor: [toysrus] No changes
+2026-05-25 14:19:58 [INFO] monitor: --- Checking creativetoys ---
+2026-05-25 14:19:58 [INFO] scrapers.creativetoys: Fetching CreativeToys via Shopify API (https://creativetoys.pt/collections/trading-card-games/products.json)
+2026-05-25 14:19:59 [INFO] scrapers.creativetoys: CreativeToys: page 1 → 39 product(s)
+2026-05-25 14:19:59 [INFO] scrapers.creativetoys: CreativeToys: 39 total product(s) fetched
+2026-05-25 14:19:59 [INFO] monitor: [creativetoys] No changes
+2026-05-25 14:20:01 [INFO] monitor: Sleeping 139s until next check…
+2026-05-25 14:20:13 [INFO] monitor: Shutdown signal received. Goodbye.

@@ -1,7 +1,3 @@
-# Runtime state
-known_products.json
-monitor.log
-
 # ECI investigation files
 eci_products.json
 eci_test.html
