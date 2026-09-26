@@ -86,20 +86,110 @@
     "pokémon - relógio inteligente pikachu",
     "mega pokémon - jogo de construção pikachu em movimento",
     "pokémon-caixa pokeball pokemon",
-    "pokemon - pikachu - set de pequeño almoço"
+    "pokemon - pikachu - set de pequeño almoço",
+    "pokémon - figura herói com mecanismo (vários modelos)",
+    "figura funko pop",
+    "pokémon - multipack 8 figuras de batalha",
+    "pokémon - pack 2 figuras evolution (vários modelos)",
+    "pokémon - figuras de vinil (vários modelos)",
+    "figura",
+    "pokémon - uma treinadora em paldea",
+    "pokémon - uma grande aventura em paldea",
+    "pokémon scarlet / pokémon violet - guia de paldea",
+    "pokémon - como desenhar?",
+    "pokémon - pesadelo lendário",
+    "pokémon - o atlas do ash",
+    "pokémon - super ultra extra enciclopédia",
+    "pokémon - vamos apanhar o quê?!",
+    "pokémon - região de galar | confronto gigantamax",
+    "pokémon - livro de atividades de sónia sander",
+    "pokémon - livro de colorir com píxeis",
+    "pokémon - região de johto - ash ketchum, detetive",
+    "pokémon - lendárias e míticas aventuras para colorir"
   ],
+  "site_groups": {
+    "toysrus": "ToysRus",
+    "ptmerch": "PTMerch"
+  },
   "sites": {
     "continente": {
       "enabled": true,
-      "url": "https://www.continente.pt/pesquisa/?q=Pokemon&start=0&srule=Continente&pmin=0.01"
+      "type": "continente",
+      "label": "Continente",
+      "url": "https://www.continente.pt/pesquisa/?q=tcg&start=0&srule=Continente&pmin=0.01"
     },
-    "toysrus": {
+    "toysrus_tcg": {
       "enabled": true,
-      "url": "https://www.toysrus.pt/Pokemon/c/Pokemon?q=%3Aprice-asc&query=pokemon"
+      "type": "toysrus",
+      "label": "ToysRus TCG",
+      "group": "toysrus",
+      "url": "https://www.toysrus.pt/search?query=tcg"
+    },
+    "toysrus_cartaspokemon": {
+      "enabled": true,
+      "type": "toysrus",
+      "label": "ToysRus Cartas Pokemon",
+      "group": "toysrus",
+      "url": "https://www.toysrus.pt/search?query=cartas%20pokemon"
     },
     "creativetoys": {
       "enabled": true,
+      "type": "shopify",
+      "label": "CreativeToys",
       "url": "https://creativetoys.pt/collections/trading-card-games"
+    },
+    "trapcardtcg": {
+      "enabled": true,
+      "type": "shopify",
+      "label": "TrapCard",
+      "url": "https://trapcardtcg.com"
+    },
+    "migueltcgbreaks": {
+      "enabled": true,
+      "type": "shopify",
+      "label": "MiguelTCG",
+      "url": "https://migueltcgbreaks.com"
+    },
+    "pandacollecting": {
+      "enabled": false,
+      "type": "woocommerce",
+      "label": "Panda",
+      "url": "https://pandacollecting.com"
+    },
+    "ptmerch": {
+      "enabled": true,
+      "type": "prestashop",
+      "label": "PTMerch",
+      "group": "ptmerch",
+      "url": "https://ptmerch.com/pt/3813-one-piece"
+    },
+    "ptmerch_boosterboxes": {
+      "enabled": true,
+      "type": "prestashop",
+      "label": "PTMerch Booster Boxes",
+      "group": "ptmerch",
+      "url": "https://ptmerch.com/pt/4160-booster-boxes-one-piece"
+    },
+    "ptmerch_boosters": {
+      "enabled": true,
+      "type": "prestashop",
+      "label": "PTMerch Boosters",
+      "group": "ptmerch",
+      "url": "https://ptmerch.com/pt/4201-boosters-one-piece"
+    },
+    "ptmerch_playmats": {
+      "enabled": true,
+      "type": "prestashop",
+      "label": "PTMerch Playmats",
+      "group": "ptmerch",
+      "url": "https://ptmerch.com/pt/4161-playmats"
+    },
+    "ptmerch_specialboxsets": {
+      "enabled": true,
+      "type": "prestashop",
+      "label": "PTMerch Special Box Sets",
+      "group": "ptmerch",
+      "url": "https://ptmerch.com/pt/4202-special-box-sets-one-piece"
     }
   }
 }

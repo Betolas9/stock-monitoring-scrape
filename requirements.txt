@@ -1,5 +1,11 @@
 requests
 beautifulsoup4
-plyer
 lxml
+fastapi
+uvicorn
+# only for scrapers that render JavaScript (none enabled by default): playwright install chromium
+playwright
+# legacy v1 (monitor.py / monitor_gui.py)
+plyer
 customtkinter
+curl_cffi

@@ -4,8 +4,6 @@ import abc
 import hashlib
 import logging
 
-from playwright.sync_api import sync_playwright
-
 logger = logging.getLogger(__name__)
 
 _USER_AGENT = (
@@ -15,10 +13,31 @@ _USER_AGENT = (
 )
 
 
+class ScrapeError(RuntimeError):
+    """A store could not be read (network error, blocked, markup changed).
+
+    Raised instead of returning a partial/empty dict: an empty result would be
+    indistinguishable from "everything sold out" and fire a storm of
+    out-of-stock events followed by restock events on the next good check.
+    """
+
+
 class BaseScraper(abc.ABC):
-    def __init__(self, name: str, url: str) -> None:
+    """Subclasses implement fetch_products() and return {product_id: product}.
+
+    Product dict keys:
+        id, name, url, in_stock (bool)
+        price, original_price  — decimal strings like "23.50", or None
+        image                  — optional image URL
+        meta                   — optional free text (product type, tags,
+                                 categories, vendor) used by the matcher to
+                                 classify the product; never shown as-is
+    """
+
+    def __init__(self, name: str, url: str, options: dict | None = None) -> None:
         self.name = name
         self.url = url
+        self.options = options or {}
 
     def _get_page_content(
         self,
@@ -26,6 +45,10 @@ class BaseScraper(abc.ABC):
         wait_selectors: list[str] | None = None,
         extra_wait_ms: int = 2500,
     ) -> str:
+        # Imported lazily: Playwright (and its browser download) is only needed
+        # by scrapers that render JavaScript, which none of the current ones do.
+        from playwright.sync_api import sync_playwright
+
         html = ""
         with sync_playwright() as pw:
             browser = pw.chromium.launch(
@@ -107,4 +130,6 @@ class BaseScraper(abc.ABC):
 
     @abc.abstractmethod
     def fetch_products(self) -> dict:
-        """Return {product_id: product_dict} for all products found on the page."""
+        """Return {product_id: product_dict} for all products found.
+
+        Raise ScrapeError when the store can't be read."""

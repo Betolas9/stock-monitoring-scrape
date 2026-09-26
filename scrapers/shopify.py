@@ -1,62 +1,63 @@
 from __future__ import annotations
 
 import logging
+import time
 
-import requests
-
-from .base import BaseScraper
+from .base import BaseScraper, ScrapeError
+from .http import JSON_HEADERS, make_session
 
 logger = logging.getLogger(__name__)
 
-_HEADERS = {
-    "User-Agent":      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0.0.0",
-    "Accept":          "application/json",
-    "Accept-Language": "pt-PT,pt;q=0.9",
-}
-
-# Shopify caps at 250 products per page; we paginate just in case the
-# collection grows, but for now the whole catalogue fits in one call.
+# Shopify caps at 250 products per page
 _PAGE_LIMIT = 250
+_MAX_PAGES = 60  # 15k products — far beyond any store we track
+_PAGE_DELAY_S = 0.3  # small pause between pages; the JSON APIs are cheap for the store
 
 
-class CreativeToysScraper(BaseScraper):
-    def __init__(self, url: str) -> None:
-        super().__init__("CreativeToys", url)
-        self._api_base = _collection_to_api(url)
+class ShopifyScraper(BaseScraper):
+    """Generic Shopify store scraper via the public /products.json API.
+
+    Works with either a whole store (https://store.com) or a single
+    collection (https://store.com/collections/xyz).
+    """
+
+    def __init__(self, label: str, url: str, options: dict | None = None) -> None:
+        super().__init__(label, url, options)
+        self._api_base = _to_api_url(url)
+        self._store_root = url.rstrip("/").split("/collections/")[0]
 
     def fetch_products(self) -> dict:
-        logger.info(f"Fetching CreativeToys via Shopify API ({self._api_base})")
+        logger.info(f"Fetching {self.name} via Shopify API ({self._api_base})")
+        session = make_session(JSON_HEADERS, impersonate=bool(self.options.get("impersonate")))
         all_products: dict = {}
-        page = 1
 
-        while True:
+        for page in range(1, _MAX_PAGES + 1):
+            if page > 1:
+                time.sleep(_PAGE_DELAY_S)
             try:
-                resp = requests.get(
+                resp = session.get(
                     self._api_base,
                     params={"limit": _PAGE_LIMIT, "page": page},
-                    headers=_HEADERS,
-                    timeout=15,
+                    timeout=25,
                 )
                 resp.raise_for_status()
+                batch = resp.json().get("products", [])
             except Exception as e:
-                logger.error(f"CreativeToys API error (page={page}): {e}")
-                break
+                raise ScrapeError(f"Shopify API error on page {page}: {e}") from e
 
-            batch = resp.json().get("products", [])
             if not batch:
                 break
 
-            logger.info(f"CreativeToys: page {page} → {len(batch)} product(s)")
+            logger.debug(f"{self.name}: page {page} → {len(batch)} product(s)")
             for item in batch:
-                p = _parse_item(item, self.url)
+                p = _parse_item(item, self._store_root)
                 if p:
                     all_products[p["id"]] = p
 
             if len(batch) < _PAGE_LIMIT:
                 break
-            page += 1
 
-        logger.info(f"CreativeToys: {len(all_products)} total product(s) fetched")
+        logger.info(f"{self.name}: {len(all_products)} total product(s) fetched")
         return all_products
 
 
@@ -64,15 +65,15 @@ class CreativeToysScraper(BaseScraper):
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _collection_to_api(url: str) -> str:
-    """Turn a /collections/… storefront URL into a /products.json API URL."""
+def _to_api_url(url: str) -> str:
+    """Turn a store root or /collections/… URL into a products.json API URL."""
     base = url.rstrip("/").split("?")[0]
     if not base.endswith("/products.json"):
         base += "/products.json"
     return base
 
 
-def _parse_item(item: dict, store_url: str) -> dict | None:
+def _parse_item(item: dict, store_root: str) -> dict | None:
     # Use the handle as ID — human-readable and stable across price/name edits
     handle = item.get("handle")
     title  = item.get("title")
@@ -90,7 +91,15 @@ def _parse_item(item: dict, store_url: str) -> dict | None:
     # compare_at_price > price means the item is currently on sale
     original_price = _original_price(variants)
 
-    url = f"{store_url.rstrip('/').split('/collections/')[0]}/products/{handle}"
+    images = item.get("images") or []
+    image = images[0].get("src") if images else None
+
+    tags = item.get("tags") or []
+    if isinstance(tags, str):
+        tags = [t.strip() for t in tags.split(",")]
+    meta = " | ".join(
+        x for x in [item.get("product_type") or "", item.get("vendor") or "", ", ".join(tags)] if x
+    )
 
     return {
         "id":             handle,
@@ -98,7 +107,9 @@ def _parse_item(item: dict, store_url: str) -> dict | None:
         "price":          price,
         "original_price": original_price,
         "in_stock":       in_stock,
-        "url":            url,
+        "url":            f"{store_root}/products/{handle}",
+        "image":          image,
+        "meta":           meta,
     }
 
 

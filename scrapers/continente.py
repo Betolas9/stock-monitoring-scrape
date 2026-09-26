@@ -3,11 +3,12 @@ from __future__ import annotations
 import json
 import logging
 import re
+from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
-import requests
 from bs4 import BeautifulSoup
 
-from .base import BaseScraper
+from .base import BaseScraper, ScrapeError
+from .http import make_session
 
 logger = logging.getLogger(__name__)
 
@@ -29,36 +30,43 @@ _HEADERS = {
 
 
 class ContinenteScraper(BaseScraper):
-    def __init__(self, url: str) -> None:
-        super().__init__("Continente", url)
+    def __init__(self, label: str = "Continente", url: str = "", options: dict | None = None) -> None:
+        super().__init__(label, url, options)
 
     def fetch_products(self) -> dict:
         logger.info(f"Fetching Continente — {self.url}")
-        try:
-            resp = requests.get(self.url, headers=_HEADERS, timeout=15)
-            resp.raise_for_status()
-            html = resp.text
-        except Exception as e:
-            logger.error(f"Continente request failed: {e}")
-            return {}
-
-        soup = BeautifulSoup(html, "lxml")
-        tiles = _select_first(soup, _TILE_SELECTORS)
-
-        if not tiles:
-            logger.warning(
-                "Continente: no product tiles found — site structure may have changed. "
-                "Enable DEBUG logging to see the page snippet."
-            )
-            logger.debug(f"Continente page snippet:\n{html[:1200]}")
-            return {}
-
-        logger.info(f"Continente: {len(tiles)} tile(s) found")
+        session = make_session(_HEADERS)
         products: dict = {}
-        for tile in tiles:
-            p = _parse_tile(tile)
-            if p:
-                products[p["id"]] = p
+        start = 0
+
+        while True:
+            url = _set_start(self.url, start)
+            try:
+                resp = session.get(url, timeout=25)
+                resp.raise_for_status()
+                html = resp.text
+            except Exception as e:
+                raise ScrapeError(f"Continente request failed (start={start}): {e}") from e
+
+            soup = BeautifulSoup(html, "lxml")
+            tiles = _select_first(soup, _TILE_SELECTORS)
+
+            if not tiles:
+                if start == 0:
+                    logger.warning(
+                        "Continente: no product tiles found — site structure may have changed. "
+                        "Enable DEBUG logging to see the page snippet."
+                    )
+                    logger.debug(f"Continente page snippet:\n{html[:1200]}")
+                break
+
+            logger.info(f"Continente: start={start} → {len(tiles)} tile(s)")
+            for tile in tiles:
+                p = _parse_tile(tile)
+                if p:
+                    products[p["id"]] = p
+
+            start += len(tiles)
 
         logger.info(f"Continente: {len(products)} product(s) parsed")
         return products
@@ -75,6 +83,15 @@ class ContinenteScraper(BaseScraper):
 # d-none class when the product is available. We skip any OOS element that is
 # hidden. The add-to-cart button being enabled is the positive confirmation.
 # ---------------------------------------------------------------------------
+
+def _set_start(url: str, start: int) -> str:
+    """Overwrite (or add) the ?start= offset used for pagination."""
+    parts = urlsplit(url)
+    query = parse_qs(parts.query)
+    query["start"] = [str(start)]
+    return urlunsplit((parts.scheme, parts.netloc, parts.path,
+                        urlencode(query, doseq=True), parts.fragment))
+
 
 def _select_first(soup: BeautifulSoup, selectors: list[str]) -> list:
     for sel in selectors:
@@ -116,7 +133,18 @@ def _parse_tile(tile) -> dict | None:
         "original_price": _extract_original_price_html(tile),
         "in_stock":       _is_in_stock(tile),
         "url":            _extract_url(tile),
+        "image":          _extract_image(tile),
+        "meta":           " | ".join(
+            str(impression.get(k)) for k in ("brand", "category") if impression and impression.get(k)
+        ),
     }
+
+
+def _extract_image(tile) -> str | None:
+    img = tile.select_one("img")
+    if not img:
+        return None
+    return img.get("data-src") or img.get("src")
 
 
 def _read_impression(tile) -> dict | None:
