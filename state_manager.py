@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -9,8 +11,9 @@ logger = logging.getLogger(__name__)
 
 
 class StateManager:
-    def __init__(self, path: str = "known_products.json") -> None:
+    def __init__(self, path: str = "data/known_products.json") -> None:
         self.path = Path(path)
+        self.path.parent.mkdir(parents=True, exist_ok=True)
         self._state: dict = self._load()
 
     # ------------------------------------------------------------------ I/O
@@ -18,17 +21,48 @@ class StateManager:
     def _load(self) -> dict:
         if not self.path.exists():
             return {}
-        try:
-            with open(self.path, encoding="utf-8") as f:
-                return json.load(f)
-        except Exception as e:
-            logger.error(f"Failed to load state from {self.path}: {e}")
-            return {}
+        # A transient lock (antivirus, sync client, file open elsewhere) must not
+        # look like "no state": that would silently rebaseline every site and, on
+        # the next successful save, overwrite the entire history. Retry, then abort.
+        last_error: Exception | None = None
+        for attempt in range(5):
+            if attempt:
+                time.sleep(1)
+            try:
+                with open(self.path, encoding="utf-8") as f:
+                    return json.load(f)
+            except PermissionError as e:
+                last_error = e
+                logger.warning(f"State file {self.path} is locked, retrying ({attempt + 1}/5)…")
+            except json.JSONDecodeError as e:
+                raise RuntimeError(
+                    f"State file {self.path} exists but is not valid JSON: {e}. "
+                    "Fix or delete it (deleting resets all sites to first-run baseline)."
+                ) from e
+        raise RuntimeError(
+            f"State file {self.path} exists but could not be read: {last_error}. "
+            "Close any program that has it open and try again."
+        )
 
     def save(self) -> None:
+        # Write to a temp file and swap it in, so a crash or lock mid-write can
+        # never leave known_products.json truncated or half-written.
+        tmp_path = self.path.with_suffix(".json.tmp")
         try:
-            with open(self.path, "w", encoding="utf-8") as f:
+            with open(tmp_path, "w", encoding="utf-8") as f:
                 json.dump(self._state, f, ensure_ascii=False, indent=2)
+            for attempt in range(5):
+                if attempt:
+                    time.sleep(1)
+                try:
+                    os.replace(tmp_path, self.path)
+                    return
+                except PermissionError:
+                    logger.warning(f"State file {self.path} is locked, retrying save ({attempt + 1}/5)…")
+            logger.error(
+                f"Failed to save state to {self.path}: file stayed locked after 5 attempts. "
+                f"Latest state kept in {tmp_path}."
+            )
         except Exception as e:
             logger.error(f"Failed to save state to {self.path}: {e}")
 

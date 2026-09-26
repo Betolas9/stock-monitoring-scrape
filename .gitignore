@@ -1,9 +1,5 @@
-# ECI investigation files
-eci_products.json
-eci_test.html
-eci_playwright.html
-eci_search.html
-eci_page.html
+# Runtime data (state, logs) — machine-local, not source
+data/
 
 # Python
 __pycache__/
@@ -20,3 +16,7 @@ env/
 # IDE
 .vscode/
 .idea/
+
+# Web UI
+web/node_modules/
+web/dist/

@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import logging
 
-import requests
-
-from .base import BaseScraper
+from .base import BaseScraper, ScrapeError
+from .http import make_session
 
 logger = logging.getLogger(__name__)
 
@@ -35,25 +34,25 @@ _API_PARAMS = {
 
 
 class ToysRusScraper(BaseScraper):
-    def __init__(self, url: str) -> None:
+    def __init__(self, label: str = "ToysRus", url: str = "", options: dict | None = None) -> None:
         # url from config.json is kept for reference; we hit the API directly
-        super().__init__("ToysRus", url)
+        super().__init__(label, url, options)
 
     def fetch_products(self) -> dict:
         query = _extract_query(self.url)
         logger.info(f"Fetching ToysRus via Empathy API (query={query!r})")
 
+        session = make_session(_API_HEADERS)
         all_products: dict = {}
         start = 0
 
         while True:
             params = {**_API_PARAMS, "query": query, "start": start}
             try:
-                resp = requests.get(_API_URL, params=params, headers=_API_HEADERS, timeout=15)
+                resp = session.get(_API_URL, params=params, timeout=25)
                 resp.raise_for_status()
             except Exception as e:
-                logger.error(f"ToysRus API error (start={start}): {e}")
-                break
+                raise ScrapeError(f"ToysRus API error (start={start}): {e}") from e
 
             batch = resp.json().get("catalog", {}).get("content", [])
             if not batch:
@@ -122,4 +121,18 @@ def _parse_item(item: dict) -> dict | None:
         "original_price": original_price,
         "in_stock":       in_stock,
         "url":            url,
+        "image":          _first_image(item),
+        "meta":           " | ".join(
+            str(x) for x in (item.get("brand"), item.get("__brand"), item.get("category")) if isinstance(x, str)
+        ),
     }
+
+
+def _first_image(item: dict) -> str | None:
+    for key in ("__images", "images", "image", "imageUrl"):
+        val = item.get(key)
+        if isinstance(val, list) and val:
+            val = val[0]
+        if isinstance(val, str) and val.startswith("http"):
+            return val
+    return None

@@ -16,14 +16,17 @@ from pathlib import Path
 
 from notifier import Notifier
 from state_manager import StateManager
-from scrapers.continente import ContinenteScraper
-from scrapers.toysrus import ToysRusScraper
-from scrapers.creativetoys import CreativeToysScraper
+from scrapers import build_scraper
 
 # ---------------------------------------------------------------------------
 # Logging — UTF-8 on both handlers so emoji survive on Windows
 # ---------------------------------------------------------------------------
-_file_handler = logging.FileHandler("monitor.log", encoding="utf-8")
+Path("data").mkdir(exist_ok=True)
+_file_handler = logging.FileHandler("data/monitor.log", encoding="utf-8")
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+except (AttributeError, OSError):
+    pass
 _console_handler = logging.StreamHandler(sys.stdout)
 
 logging.basicConfig(
@@ -33,13 +36,6 @@ logging.basicConfig(
     handlers=[_file_handler, _console_handler],
 )
 logger = logging.getLogger("monitor")
-
-# Map config site keys → scraper classes
-_SCRAPER_MAP = {
-    "continente":  ContinenteScraper,
-    "toysrus":     ToysRusScraper,
-    "creativetoys": CreativeToysScraper,
-}
 
 
 def load_config(path: str = "config.json") -> dict:
@@ -53,14 +49,13 @@ def run_check(config: dict, state: StateManager, notifier: Notifier) -> None:
             logger.debug(f"[{site_name}] disabled, skipping")
             continue
 
-        scraper_cls = _SCRAPER_MAP.get(site_name)
-        if not scraper_cls:
+        scraper = build_scraper(site_name, site_cfg)
+        if scraper is None:
             logger.warning(f"No scraper registered for '{site_name}', skipping")
             continue
 
         try:
             logger.info(f"--- Checking {site_name} ---")
-            scraper = scraper_cls(site_cfg["url"])
             new_products = scraper.fetch_products()
 
             # Apply ignore-keyword filter (case-insensitive substring match)
@@ -106,7 +101,7 @@ def run_check(config: dict, state: StateManager, notifier: Notifier) -> None:
 
 def main() -> None:
     config = load_config()
-    state = StateManager("known_products.json")
+    state = StateManager("data/known_products.json")
     notifier = Notifier()
     interval_min = config.get("check_interval_min_seconds", config.get("check_interval_seconds", 90))
     interval_max = config.get("check_interval_max_seconds", config.get("check_interval_seconds", 150))
@@ -121,8 +116,8 @@ def main() -> None:
     logger.info("Stock Monitor started")
     logger.info(f"Sites      : {', '.join(active_sites)}")
     logger.info(f"Interval   : {interval_min}–{interval_max}s (randomised)")
-    logger.info(f"State file : {Path('known_products.json').resolve()}")
-    logger.info(f"Log file   : {Path('monitor.log').resolve()}")
+    logger.info(f"State file : {Path('data/known_products.json').resolve()}")
+    logger.info(f"Log file   : {Path('data/monitor.log').resolve()}")
     logger.info("Press Ctrl+C to stop")
     logger.info("=" * 60)
 

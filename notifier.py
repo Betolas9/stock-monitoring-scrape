@@ -16,10 +16,14 @@ except Exception:
     _PLYER_OK = False
 
 
-def send_notification(title: str, message: str, timeout: int = 10) -> None:
-    """Send a desktop notification. Uses WinRT toast on Windows, plyer elsewhere."""
+def send_notification(title: str, message: str, timeout: int = 10, sound: str | None = None) -> None:
+    """Send a desktop notification. Uses WinRT toast on Windows, plyer elsewhere.
+
+    `sound` is a `ms-winsoundevent:...` id (see _SOUNDS below) — ignored on
+    the plyer fallback, which doesn't support picking a sound.
+    """
     if sys.platform == "win32":
-        _send_winrt_toast(title, message)
+        _send_winrt_toast(title, message, sound)
     elif _PLYER_OK and _plyer_notify is not None:
         try:
             _plyer_notify.notify(title=title[:64], message=message[:256],
@@ -28,17 +32,23 @@ def send_notification(title: str, message: str, timeout: int = 10) -> None:
             logger.debug(f"plyer notification failed: {e}")
 
 
-def _send_winrt_toast(title: str, message: str) -> None:
+def _send_winrt_toast(title: str, message: str, sound: str | None = None) -> None:
     """Fire a real Windows 10/11 toast notification via PowerShell WinRT."""
     def _esc(s: str) -> str:
         return (s.replace("&", "&amp;").replace("<", "&lt;")
                   .replace(">", "&gt;").replace('"', "&quot;"))
 
+    # Built-in ms-winsoundevent ids work from an unpackaged Win32 app;
+    # a custom .wav would need MSIX packaging, so we stick to these.
+    audio_xml = f'<audio src="{_esc(sound)}" />' if sound else ""
+
     xml = (
         '<toast><visual><binding template="ToastText02">'
         f'<text id="1">{_esc(str(title)[:64])}</text>'
         f'<text id="2">{_esc(str(message)[:256])}</text>'
-        '</binding></visual></toast>'
+        '</binding></visual>'
+        f'{audio_xml}'
+        '</toast>'
     )
     b64xml = base64.b64encode(xml.encode("utf-8")).decode()
 
@@ -75,6 +85,35 @@ _ICONS = {
 
 # Send one grouped summary when a site has this many changes in a single check
 _SUMMARY_THRESHOLD = 5
+
+# Built-in Windows toast sound events — distinct per kind of change so you
+# can tell them apart without looking at the screen. "price_change" splits
+# into increase/decrease since those two are opposite news.
+_SOUNDS = {
+    "back_in_stock":  "ms-winsoundevent:Notification.IM",
+    "new_product":    "ms-winsoundevent:Notification.Mail",
+    "price_decrease": "ms-winsoundevent:Notification.Reminder",
+    "price_increase": "ms-winsoundevent:Notification.SMS",
+    "out_of_stock":   "ms-winsoundevent:Notification.Default",
+}
+
+# When a grouped summary spans several event types, pick one sound — the
+# most actionable/exciting kind present, checked in this order.
+_SOUND_PRIORITY = ["back_in_stock", "new_product", "price_decrease", "price_increase", "out_of_stock"]
+
+
+def _event_sound_key(event: dict) -> str:
+    t = event["type"]
+    if t != "price_change":
+        return t
+    try:
+        old = float(event.get("old_price") or 0)
+        new = float(event["product"].get("price") or 0)
+        if old and new and new > old:
+            return "price_increase"
+    except (ValueError, TypeError):
+        pass
+    return "price_decrease"
 
 
 class Notifier:
@@ -123,7 +162,7 @@ class Notifier:
         title, body = self._format(site_name, event)
         ts = datetime.now().strftime("%H:%M:%S")
         logger.info(f"[{ts}] {body}")
-        self._push(title, body)
+        self._push(title, body, sound=_SOUNDS.get(_event_sound_key(event)))
 
     def _send_summary(self, site_name: str, events: list[dict]) -> None:
         counts: dict[str, int] = {}
@@ -140,12 +179,15 @@ class Notifier:
         body = " | ".join(parts)
         ts = datetime.now().strftime("%H:%M:%S")
         logger.info(f"[{ts}] SUMMARY [{site_name}]: {body}")
-        self._push(title, body, timeout=20)
+
+        sound_keys = {_event_sound_key(e) for e in events}
+        sound = next((_SOUNDS[k] for k in _SOUND_PRIORITY if k in sound_keys), None)
+        self._push(title, body, timeout=20, sound=sound)
 
         # Log each event individually so the log file has the full detail
         for e in events:
             _, individual = self._format(site_name, e)
             logger.info(f"  └─ {individual}")
 
-    def _push(self, title: str, message: str, timeout: int = 10) -> None:
-        send_notification(title, message, timeout)
+    def _push(self, title: str, message: str, timeout: int = 10, sound: str | None = None) -> None:
+        send_notification(title, message, timeout, sound=sound)

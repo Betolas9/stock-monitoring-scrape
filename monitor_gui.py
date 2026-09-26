@@ -22,9 +22,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from notifier import send_notification
 from state_manager import StateManager
-from scrapers.continente import ContinenteScraper
-from scrapers.toysrus import ToysRusScraper
-from scrapers.creativetoys import CreativeToysScraper
+from scrapers import build_scraper, site_label
 
 # ── theme ─────────────────────────────────────────────────────────────────────
 ctk.set_appearance_mode("dark")
@@ -42,21 +40,6 @@ C_GRAY   = "#6b7280"
 C_TEXT   = "#f9fafb"
 C_GOLD   = "#fde68a"
 
-SCRAPER_MAP = {
-    "continente":   ContinenteScraper,
-    "toysrus":      ToysRusScraper,
-    "creativetoys": CreativeToysScraper,
-}
-SITE_LABEL = {
-    "continente":   "Continente",
-    "toysrus":      "ToysRus",
-    "creativetoys": "CreativeToys",
-}
-SITE_URL = {
-    "continente":   "https://www.continente.pt",
-    "toysrus":      "https://www.toysrus.pt",
-    "creativetoys": "https://creativetoys.pt",
-}
 EVENT_TAG = {
     "new_product":   ("🆕", "new"),
     "back_in_stock": ("✅", "back"),
@@ -204,7 +187,7 @@ class App(ctk.CTk):
         self.protocol("WM_DELETE_WINDOW", self._on_close)
 
         self._cfg     = _load_config()
-        self._state   = StateManager("known_products.json")
+        self._state   = StateManager("data/known_products.json")
         self._q: queue.Queue = queue.Queue()
         self._running = False
         self._thread  = None
@@ -222,6 +205,37 @@ class App(ctk.CTk):
         self._update_stats()
         self._poll_queue()
         self._tick()
+
+    # ── helpers ───────────────────────────────────────────────────────────────
+
+    def _label(self, site_key: str) -> str:
+        return site_label(site_key, self._cfg.get("sites", {}).get(site_key, {}))
+
+    def _group_key(self, site_key: str) -> str:
+        """Sites sharing a "group" in config.json (e.g. several PTMerch
+        categories) collapse into one sidebar row / filter."""
+        return self._cfg.get("sites", {}).get(site_key, {}).get("group", site_key)
+
+    def _group_label(self, group_key: str) -> str:
+        groups_cfg = self._cfg.get("site_groups", {})
+        return groups_cfg.get(group_key) or self._label(group_key)
+
+    def _grouped_products(self) -> dict[str, dict[str, tuple[str, dict]]]:
+        """Merge every site's persisted products into per-group buckets,
+        deduped by product id. Overlapping feeds on the same store (e.g.
+        ToysRus's "tcg" and "cartas pokemon" searches) legitimately return
+        the same product from both — first one seen wins, the rest are
+        dropped rather than shown twice."""
+        result: dict[str, dict[str, tuple[str, dict]]] = {}
+        for site, products in self._state._state.items():
+            if not isinstance(products, dict):
+                continue
+            group = self._group_key(site)
+            label = self._label(site)
+            bucket = result.setdefault(group, {})
+            for pid, p in products.items():
+                bucket.setdefault(pid, (label, p))
+        return result
 
     # ── layout ────────────────────────────────────────────────────────────────
 
@@ -245,17 +259,6 @@ class App(ctk.CTk):
         ctk.CTkLabel(hdr, text="Stock Monitor",
                      font=("Segoe UI", 20, "bold"),
                      text_color=C_TEXT).grid(row=0, column=1, sticky="w", pady=18)
-
-        # Site pills
-        pills = ctk.CTkFrame(hdr, fg_color="transparent")
-        pills.grid(row=0, column=2, padx=16, sticky="w")
-        active = [s for s, c in self._cfg.get("sites", {}).items() if c.get("enabled")]
-        for i, s in enumerate(active):
-            ctk.CTkLabel(pills, text=SITE_LABEL.get(s, s),
-                         font=("Segoe UI", 11, "bold"),
-                         fg_color=C_CARD, corner_radius=6,
-                         text_color=C_ACCENT,
-                         padx=10, pady=3).grid(row=0, column=i, padx=4)
 
         # Ignore-list button
         ctk.CTkButton(hdr, text="🚫  Ignore", width=100, height=36,
@@ -322,15 +325,120 @@ class App(ctk.CTk):
     def _build_main(self):
         main = ctk.CTkFrame(self, fg_color=C_BG, corner_radius=0)
         main.grid(row=2, column=0, sticky="nsew", padx=14, pady=14)
-        main.grid_columnconfigure(0, weight=62)
-        main.grid_columnconfigure(1, weight=38)
+        main.grid_columnconfigure(0, weight=0)
+        main.grid_columnconfigure(1, weight=62)
+        main.grid_columnconfigure(2, weight=38)
         main.grid_rowconfigure(0, weight=1)
+        self._build_sidebar(main)
         self._build_products(main)
         self._build_log(main)
 
+    # ── sites sidebar ─────────────────────────────────────────────────────────
+
+    def _build_sidebar(self, parent):
+        panel = ctk.CTkFrame(parent, fg_color=C_PANEL, corner_radius=12, width=200)
+        panel.grid(row=0, column=0, sticky="nsw", padx=(0, 7))
+        panel.grid_propagate(False)
+        panel.grid_columnconfigure(0, weight=1)
+        panel.grid_rowconfigure(1, weight=1)
+
+        ctk.CTkLabel(panel, text="Sites",
+                     font=("Segoe UI", 14, "bold"),
+                     text_color=C_TEXT).grid(row=0, column=0, sticky="w",
+                                             padx=14, pady=(14, 6))
+
+        # Group site config entries sharing a "group" (see config.json) into
+        # one sidebar row each — e.g. several PTMerch categories collapse
+        # into a single "PTMerch" row instead of cluttering the list.
+        self._groups: dict[str, list[str]] = {}
+        for key in self._cfg.get("sites", {}):
+            self._groups.setdefault(self._group_key(key), []).append(key)
+
+        scroll = ctk.CTkScrollableFrame(
+            panel, fg_color="transparent",
+            scrollbar_button_color=C_CARD,
+            scrollbar_button_hover_color="#4b5563",
+        )
+        scroll.grid(row=1, column=0, sticky="nsew", padx=4, pady=(0, 10))
+        scroll.grid_columnconfigure(0, weight=1)
+
+        self._side_rows: dict[str | None, dict] = {}
+        self._selected_site: str | None = None
+
+        self._add_sidebar_row(scroll, 0, None)
+        for i, group_key in enumerate(self._groups):
+            self._add_sidebar_row(scroll, i + 1, group_key)
+
+        self._highlight_sidebar()
+
+    def _add_sidebar_row(self, panel, grid_row: int, key: str | None):
+        """One sidebar row per site group: clickable button + count, and an
+        on/off switch (except for the 'All' pseudo-row) that toggles every
+        site in the group together."""
+        row = ctk.CTkFrame(panel, fg_color="transparent")
+        row.grid(row=grid_row, column=0, sticky="ew", padx=4, pady=2)
+        row.grid_columnconfigure(0, weight=1)
+
+        label = "All Sites" if key is None else self._group_label(key)
+        btn = ctk.CTkButton(
+            row, text=f"{label}\n—", width=120, height=44, anchor="w",
+            font=("Segoe UI", 12), fg_color="transparent",
+            hover_color=C_CARD, text_color=C_TEXT, corner_radius=8,
+            command=lambda k=key: self._select_site(k),
+        )
+        btn.grid(row=0, column=0, sticky="ew")
+
+        sw = None
+        if key is not None:
+            members = self._groups[key]
+            sw = ctk.CTkSwitch(row, text="", width=36, switch_width=34,
+                               switch_height=18, progress_color=C_GREEN,
+                               command=lambda k=key: self._toggle_group(k))
+            if all(self._cfg["sites"][m].get("enabled", True) for m in members):
+                sw.select()
+            sw.grid(row=0, column=1, padx=(4, 0))
+
+        self._side_rows[key] = {"btn": btn, "switch": sw, "label": label}
+
+    def _select_site(self, key: str | None):
+        self._selected_site = key
+        self._filter_site.set("All Sites" if key is None else key)
+        self._highlight_sidebar()
+
+    def _highlight_sidebar(self):
+        for k, widgets in self._side_rows.items():
+            active = (k == self._selected_site)
+            widgets["btn"].configure(
+                fg_color=C_CARD if active else "transparent",
+                text_color=C_ACCENT if active else C_TEXT,
+            )
+
+    def _toggle_group(self, group_key: str):
+        members = self._groups[group_key]
+        new_state = not all(self._cfg["sites"][m].get("enabled", True) for m in members)
+        for m in members:
+            self._cfg["sites"][m]["enabled"] = new_state
+        try:
+            _save_config(self._cfg)
+        except Exception:
+            pass
+        state = "enabled" if new_state else "disabled"
+        n = len(members)
+        feeds = "feed" if n == 1 else "feeds"
+        self._log_write(
+            f"{datetime.now().strftime('%H:%M:%S')}  "
+            f"[{self._group_label(group_key)}] {state} ({n} {feeds})\n", "info"
+        )
+
+    def _update_sidebar_counts(self, counts: dict[str, int]):
+        """`counts` is already keyed by group (see _grouped_products)."""
+        for key, widgets in self._side_rows.items():
+            n = sum(counts.values()) if key is None else counts.get(key, 0)
+            widgets["btn"].configure(text=f"{widgets['label']}\n{n} products")
+
     def _build_products(self, parent):
         panel = ctk.CTkFrame(parent, fg_color=C_PANEL, corner_radius=12)
-        panel.grid(row=0, column=0, sticky="nsew", padx=(0, 7))
+        panel.grid(row=0, column=1, sticky="nsew", padx=(0, 7))
         panel.grid_columnconfigure(0, weight=1)
         panel.grid_rowconfigure(1, weight=1)
 
@@ -339,14 +447,10 @@ class App(ctk.CTk):
         flt.grid(row=0, column=0, sticky="ew", padx=14, pady=(14, 8))
         flt.grid_columnconfigure(2, weight=1)
 
-        active    = [s for s, c in self._cfg.get("sites", {}).items() if c.get("enabled")]
-        site_opts = ["All Sites"] + [SITE_LABEL.get(s, s) for s in active]
-        om_kw     = dict(height=34, fg_color=C_CARD, button_color=C_CARD,
-                         dropdown_fg_color=C_CARD, font=("Segoe UI", 12),
-                         dropdown_font=("Segoe UI", 12))
+        om_kw = dict(height=34, fg_color=C_CARD, button_color=C_CARD,
+                     dropdown_fg_color=C_CARD, font=("Segoe UI", 12),
+                     dropdown_font=("Segoe UI", 12))
 
-        ctk.CTkOptionMenu(flt, values=site_opts, variable=self._filter_site,
-                          width=136, **om_kw).grid(row=0, column=0, padx=(0, 8))
         ctk.CTkOptionMenu(flt,
                           values=["All Status", "In Stock", "Out of Stock", "On Sale"],
                           variable=self._filter_status,
@@ -426,7 +530,7 @@ class App(ctk.CTk):
 
     def _build_log(self, parent):
         panel = ctk.CTkFrame(parent, fg_color=C_PANEL, corner_radius=12)
-        panel.grid(row=0, column=1, sticky="nsew", padx=(7, 0))
+        panel.grid(row=0, column=2, sticky="nsew", padx=(7, 0))
         panel.grid_columnconfigure(0, weight=1)
         panel.grid_rowconfigure(1, weight=1)
 
@@ -508,11 +612,11 @@ class App(ctk.CTk):
                 break
             if not cfg.get("enabled", True):
                 continue
-            cls = SCRAPER_MAP.get(site)
-            if not cls:
+            scraper = build_scraper(site, cfg)
+            if scraper is None:
                 continue
             try:
-                products = cls(cfg["url"]).fetch_products()
+                products = scraper.fetch_products()
                 if ignore and products:
                     products = {
                         pid: p for pid, p in products.items()
@@ -556,7 +660,7 @@ class App(ctk.CTk):
                     _, site, n = item
                     self._log_write(
                         f"{datetime.now().strftime('%H:%M:%S')}  "
-                        f"[{SITE_LABEL.get(site, site)}] baseline: {n} products\n", "info"
+                        f"[{self._label(site)}] baseline: {n} products\n", "info"
                     )
                     self._refresh_table()
                     self._update_stats()
@@ -569,13 +673,13 @@ class App(ctk.CTk):
                     _, site, msg = item
                     self._log_write(
                         f"{datetime.now().strftime('%H:%M:%S')}  "
-                        f"[{SITE_LABEL.get(site, site)}] ⚠ {msg}\n", "info"
+                        f"[{self._label(site)}] ⚠ {msg}\n", "info"
                     )
                 elif k == "err":
                     _, site, msg = item
                     self._log_write(
                         f"{datetime.now().strftime('%H:%M:%S')}  "
-                        f"[{SITE_LABEL.get(site, site)}] ERROR: {msg}\n", "err"
+                        f"[{self._label(site)}] ERROR: {msg}\n", "err"
                     )
                 elif k == "done":
                     t = item[1].strftime("%H:%M:%S")
@@ -592,19 +696,16 @@ class App(ctk.CTk):
     def _refresh_table(self):
         self._rows = []
         ignore = [kw.lower() for kw in self._cfg.get("ignore_keywords", [])]
-        for site, products in self._state._state.items():
-            if not isinstance(products, dict):
-                continue
-            label = SITE_LABEL.get(site, site)
-            for pid, p in products.items():
+        for group, products in self._grouped_products().items():
+            for pid, (label, p) in products.items():
                 name = p.get("name", "?")
                 if ignore and any(kw in name.lower() for kw in ignore):
                     continue
                 in_s  = p.get("in_stock", True)
                 price = f"€{p['price']}" if p.get("price") else "—"
-                url   = p.get("url") or SITE_URL.get(site, "")
+                url   = p.get("url") or ""
                 disc  = _compute_discount(p.get("original_price"), p.get("price"))
-                self._rows.append((label, name, price, disc,
+                self._rows.append((group, label, name, price, disc,
                                    "✅  In Stock" if in_s else "❌  Out of Stock",
                                    in_s, url))
         self._apply_filters()
@@ -620,8 +721,8 @@ class App(ctk.CTk):
         self._iid_to_url = {}
         shown = 0
 
-        for site, name, price, disc, status, in_s, url in self._rows:
-            if sf != "All Sites"    and site != sf:                       continue
+        for group, site, name, price, disc, status, in_s, url in self._rows:
+            if sf != "All Sites"    and group != sf:                       continue
             if st == "In Stock"     and not in_s:                         continue
             if st == "Out of Stock" and in_s:                             continue
             if st == "On Sale"      and not disc:                         continue
@@ -647,20 +748,21 @@ class App(ctk.CTk):
 
     def _update_stats(self):
         total = in_s = out_s = disc_count = 0
+        group_counts: dict[str, int] = {}
         ignore = [kw.lower() for kw in self._cfg.get("ignore_keywords", [])]
-        for site, products in self._state._state.items():
-            if not isinstance(products, dict):
-                continue
-            for pid, p in products.items():
+        for group, products in self._grouped_products().items():
+            for pid, (label, p) in products.items():
                 if ignore and any(kw in p.get("name", "").lower() for kw in ignore):
                     continue
                 total += 1
+                group_counts[group] = group_counts.get(group, 0) + 1
                 if p.get("in_stock", True):
                     in_s += 1
                 else:
                     out_s += 1
                 if _compute_discount(p.get("original_price"), p.get("price")):
                     disc_count += 1
+        self._update_sidebar_counts(group_counts)
         self._lbl_total.configure(text=f"{total}  products")
         self._lbl_in.configure(text=f"✅  {in_s}  in stock")
         self._lbl_out.configure(text=f"❌  {out_s}  out of stock")
@@ -735,7 +837,7 @@ class App(ctk.CTk):
         pstr   = f"€{p['price']}" if p.get("price") else ""
         t      = event["type"]
         icon, tag = EVENT_TAG.get(t, ("•", "info"))
-        slabel = SITE_LABEL.get(site, site)
+        slabel = self._label(site)
         ts     = datetime.now().strftime("%H:%M:%S")
 
         if t == "new_product":
