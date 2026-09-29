@@ -24,29 +24,36 @@ RETRY_DELAYS = [15, 60, 300, 900, 1800]   # seconds between attempts; then give 
 MAX_AGE_S = 6 * 3600                      # stale alerts are useless — stop retrying after this
 
 
-def enabled_channels(cfg: dict) -> list[str]:
+def enabled_targets(cfg: dict) -> list[tuple[str, str | None]]:
+    """(channel, recipient) pairs that should receive alerts. Every Telegram
+    recipient is its own target, so each one is delivered and retried
+    separately (a failure for one person never re-sends to the others)."""
     ch = cfg["channels"]
-    out = []
-    if ch["telegram"]["enabled"] and ch["telegram"]["bot_token"] and ch["telegram"]["chat_id"]:
-        out.append("telegram")
+    out: list[tuple[str, str | None]] = []
+    if ch["telegram"]["enabled"] and ch["telegram"]["bot_token"]:
+        out += [("telegram", str(r["id"])) for r in telegram.recipients(ch["telegram"])]
     if ch["discord"]["enabled"] and ch["discord"]["webhook_url"]:
-        out.append("discord")
+        out.append(("discord", None))
     if ch["windows"]["enabled"]:
-        out.append("windows")
+        out.append(("windows", None))
     return out
 
 
-def enqueue(conn: sqlite3.Connection, payload: dict, channels: list[str] | None = None) -> int:
+def enabled_channels(cfg: dict) -> list[str]:
+    return sorted({c for c, _t in enabled_targets(cfg)})
+
+
+def enqueue(conn: sqlite3.Connection, payload: dict, targets: list[tuple[str, str | None]] | None = None) -> int:
     cfg = settings.get()
-    channels = channels if channels is not None else enabled_channels(cfg)
+    targets = targets if targets is not None else enabled_targets(cfg)
     now = timeutil.iso()
-    for ch in channels:
+    for channel, target in targets:
         conn.execute(
-            "INSERT INTO notifications(created_at, channel, status, attempts, next_attempt_at, summary, payload)"
-            " VALUES(?,?,'pending',0,?,?,?)",
-            (now, ch, now, summary_text(payload), db.jdump(payload)),
+            "INSERT INTO notifications(created_at, channel, target, status, attempts, next_attempt_at, summary, payload)"
+            " VALUES(?,?,?,'pending',0,?,?,?)",
+            (now, channel, target, now, summary_text(payload), db.jdump(payload)),
         )
-    return len(channels)
+    return len(targets)
 
 
 def enqueue_events(conn: sqlite3.Connection, store_name: str, events: list[dict]) -> None:
@@ -63,10 +70,10 @@ def enqueue_events(conn: sqlite3.Connection, store_name: str, events: list[dict]
         enqueue(conn, payload)
 
 
-def send_now(channel: str, payload: dict, cfg: dict | None = None) -> None:
+def send_now(channel: str, payload: dict, cfg: dict | None = None, target: str | None = None) -> None:
     """Synchronous send (used by the settings page "Send test" buttons)."""
     cfg = cfg or settings.get()
-    SENDERS[channel](payload, cfg["channels"][channel])
+    SENDERS[channel](payload, cfg["channels"][channel], target)
 
 
 class Dispatcher:
@@ -112,7 +119,7 @@ class Dispatcher:
         payload = db.jload(n["payload"], {})
         attempts = n["attempts"] + 1
         try:
-            SENDERS[n["channel"]](payload, cfg["channels"][n["channel"]])
+            SENDERS[n["channel"]](payload, cfg["channels"][n["channel"]], n.get("target"))
         except Exception as e:  # noqa: BLE001 — any failure is retried/logged, never fatal
             created = timeutil.parse(n["created_at"])
             too_old = created and (timeutil.now() - created).total_seconds() > MAX_AGE_S

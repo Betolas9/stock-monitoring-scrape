@@ -51,7 +51,7 @@ def list_notifications(status: str = "", channel: str = "", page: int = 1, page_
     with db.read() as conn:
         total = conn.execute(f"SELECT COUNT(*) FROM notifications{sql_where}", args).fetchone()[0]
         items = db.rows(conn.execute(
-            f"SELECT id, created_at, channel, status, attempts, next_attempt_at, sent_at, last_error, summary"
+            f"SELECT id, created_at, channel, target, status, attempts, next_attempt_at, sent_at, last_error, summary"
             f" FROM notifications{sql_where} ORDER BY id DESC LIMIT ? OFFSET ?", args + [size, offset]))
     return paged(items, total, page, size)
 

@@ -58,7 +58,7 @@ def toast(title: str, message: str, sound: str | None = None) -> None:
         raise NotifyError(f"could not start PowerShell: {e}") from e
 
 
-def send(payload: dict, cfg: dict) -> None:
+def send(payload: dict, cfg: dict, target: str | None = None) -> None:
     items = payload.get("items") or []
     if payload["kind"] != "events":
         toast(payload["title"], payload.get("text", ""))

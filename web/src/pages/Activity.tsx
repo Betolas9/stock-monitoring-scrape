@@ -1,7 +1,7 @@
 import { Link, useSearchParams } from 'react-router-dom'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, qs } from '../api'
-import type { EventItem, NotificationItem, Paged } from '../types'
+import type { EventItem, NotificationItem, Paged, Settings } from '../types'
 import { EVENT_LABELS, REASON_LABELS, dateTime, money, relTime } from '../format'
 import { Badge, Empty, Pagination, ProductImage, Spinner, Toggle } from '../components/ui'
 import { toast } from '../components/Toaster'
@@ -81,6 +81,9 @@ function Notifications() {
     refetchInterval: 5000,
     placeholderData: keepPreviousData,
   })
+  const { data: cfg } = useQuery({ queryKey: ['settings'], queryFn: () => api.get<Settings>('/settings') })
+  const who = (n: NotificationItem) =>
+    n.target ? (cfg?.channels.telegram.recipients.find((r) => r.id === n.target)?.name ?? n.target) : null
   const retry = useMutation({
     mutationFn: (id: number) => api.post(`/notifications/${id}/retry`),
     onSuccess: () => { toast('Queued for retry'); qc.invalidateQueries({ queryKey: ['notifications'] }) },
@@ -109,7 +112,7 @@ function Notifications() {
                 {data.items.map((n) => (
                   <tr key={n.id}>
                     <td className="small nowrap" title={dateTime(n.created_at)}>{relTime(n.created_at)}</td>
-                    <td><Badge tone="muted">{n.channel}</Badge></td>
+                    <td className="nowrap"><Badge tone="muted">{n.channel}</Badge>{who(n) && <span className="small"> → {who(n)}</span>}</td>
                     <td>
                       <Badge tone={n.status === 'sent' ? 'good' : n.status === 'failed' ? 'bad' : 'info'}>{n.status}</Badge>
                       {n.attempts > 1 && <span className="muted small"> {n.attempts} tries</span>}

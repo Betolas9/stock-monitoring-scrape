@@ -210,6 +210,7 @@ export interface NotificationItem {
   id: number
   created_at: string
   channel: string
+  target: string | null
   status: 'pending' | 'sent' | 'failed'
   attempts: number
   next_attempt_at: string | null
@@ -218,11 +219,17 @@ export interface NotificationItem {
   summary: string | null
 }
 
+export interface TelegramRecipient {
+  id: string
+  name: string
+  enabled: boolean
+}
+
 export interface Settings {
   scheduler: { interval_min: number; interval_max: number; concurrency: number; paused: boolean }
   ignore_keywords: string[]
   channels: {
-    telegram: { enabled: boolean; bot_token: string; chat_id: string }
+    telegram: { enabled: boolean; bot_token: string; recipients: TelegramRecipient[] }
     discord: { enabled: boolean; webhook_url: string; mention: string }
     windows: { enabled: boolean }
   }

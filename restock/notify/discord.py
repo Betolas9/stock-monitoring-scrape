@@ -41,7 +41,7 @@ def _post(url: str, body: dict) -> None:
         raise NotifyError(f"Discord HTTP {r.status_code}: {r.text[:200]}")
 
 
-def send(payload: dict, cfg: dict) -> None:
+def send(payload: dict, cfg: dict, target: str | None = None) -> None:
     url = (cfg.get("webhook_url") or "").strip()
     if not url:
         raise NotifyError("Discord webhook URL not configured")

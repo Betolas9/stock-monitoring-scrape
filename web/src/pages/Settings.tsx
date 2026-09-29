@@ -8,13 +8,73 @@ import { toast } from '../components/Toaster'
 
 type Chat = { id: string; name: string; type: string }
 
-function ChannelTest({ channel, settings }: { channel: string; settings?: Record<string, unknown> }) {
+function ChannelTest({ channel, settings, target, label = 'Send test' }: {
+  channel: string; settings?: Record<string, unknown>; target?: string; label?: string
+}) {
   const test = useMutation({
-    mutationFn: () => api.post<{ ok: boolean; error?: string }>('/settings/test', { channel, settings }),
-    onSuccess: (r) => (r.ok ? toast(`Test sent via ${channel} ✔`) : toast(`${channel}: ${r.error}`, 'error')),
+    mutationFn: () => api.post<{ ok: boolean; error?: string; sent?: number }>('/settings/test', { channel, settings, target }),
+    onSuccess: (r) => (r.ok
+      ? toast(`Test sent via ${channel}${r.sent && r.sent > 1 ? ` to ${r.sent} people` : ''} ✔`)
+      : toast(`${channel}: ${r.error}`, 'error')),
     onError: (e: Error) => toast(e.message, 'error'),
   })
-  return <button className="btn btn-sm" onClick={() => test.mutate()} disabled={test.isPending}>{test.isPending ? 'Sending…' : 'Send test'}</button>
+  return <button className="btn btn-sm" onClick={() => test.mutate()} disabled={test.isPending}>{test.isPending ? 'Sending…' : label}</button>
+}
+
+function TransferSection() {
+  const qc = useQueryClient()
+  const [busy, setBusy] = useState(false)
+  const exportFile = async () => {
+    setBusy(true)
+    try {
+      const data = await api.get<Record<string, unknown>>('/backup/export')
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(blob)
+      a.download = `restock-monitoring-settings-${new Date().toISOString().slice(0, 10)}.json`
+      a.click()
+      URL.revokeObjectURL(a.href)
+      toast('Settings exported')
+    } catch (e) {
+      toast((e as Error).message, 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+  const importFile = async (file: File) => {
+    if (!window.confirm('Import these settings? They replace your current settings, favourites, calendar and store changes.')) return
+    setBusy(true)
+    try {
+      const data = JSON.parse(await file.text())
+      const r = await api.post<Record<string, number>>('/backup/import', data)
+      toast(`Imported: ${r.stores_added} stores added, ${r.stores_updated} updated, ${r.favorites} favourites, ` +
+        `${r.sets_added + r.sets_updated} calendar entries`)
+      qc.invalidateQueries()
+    } catch (e) {
+      toast(e instanceof SyntaxError ? 'That file is not a settings export' : (e as Error).message, 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <section className="card section">
+      <h2>Move to another computer</h2>
+      <p className="muted small">
+        <b>Export</b> downloads one file with your settings (alert channels incl. the Telegram token and recipients,
+        alert rules, intervals, ignored keywords), favourites and target prices, release calendar (focus, dates) and
+        store list (on/off, stores you added or edited). <b>Import</b> it on the other computer. Price history isn’t
+        included — copy <code>data/restock.db</code> for that. Keep the file private: it contains your bot token.
+      </p>
+      <div className="btn-group">
+        <button className="btn" disabled={busy} onClick={exportFile}>⬇ Export settings</button>
+        <label className={`btn ${busy ? 'is-disabled' : ''}`}>
+          ⬆ Import settings…
+          <input type="file" accept="application/json,.json" hidden disabled={busy}
+            onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) importFile(f) }} />
+        </label>
+      </div>
+    </section>
+  )
 }
 
 export default function SettingsPage() {
@@ -48,15 +108,24 @@ export default function SettingsPage() {
     onSuccess: (r) => {
       if (!r.ok) return toast(r.error ?? 'Failed', 'error')
       setBotName(r.bot?.username ?? null)
-      setChats(r.chats ?? [])
-      if (r.chats?.length === 1 && s) {
-        setS({ ...s, channels: { ...s.channels, telegram: { ...s.channels.telegram, chat_id: r.chats[0].id, enabled: true } } })
-        toast(`Found your chat (${r.chats[0].name}) — press Save`)
-      } else if (!r.chats?.length) {
-        toast(`Bot @${r.bot?.username} found, but no messages yet: send it any message in Telegram, then detect again`, 'error')
+      const known = new Set((s?.channels.telegram.recipients ?? []).map((x) => x.id))
+      const fresh = (r.chats ?? []).filter((c) => !known.has(c.id))
+      setChats(fresh)
+      if (!r.chats?.length) {
+        toast(`Bot @${r.bot?.username} found, but nobody has messaged it yet: open it in Telegram, press Start, then detect again`, 'error')
+      } else if (!fresh.length) {
+        toast('Everyone who messaged the bot is already a recipient')
       }
     },
   })
+  const addRecipient = (c: Chat) => {
+    set((d) => {
+      d.channels.telegram.recipients.push({ id: c.id, name: c.name, enabled: true })
+      d.channels.telegram.enabled = true
+    })
+    setChats((xs) => (xs ?? []).filter((x) => x.id !== c.id))
+    toast(`${c.name} added — press Save`)
+  }
 
   if (isLoading || !s) return <div className="page"><Spinner /></div>
   const set = (fn: (d: Settings) => void) => setS((prev) => { const d = structuredClone(prev!); fn(d); return d })
@@ -78,34 +147,62 @@ export default function SettingsPage() {
       <section className="card section">
         <h2>📱 Phone alerts — Telegram <span className="muted small">(recommended)</span></h2>
         <ol className="steps small">
-          <li>In Telegram, open <a href="https://t.me/BotFather" target="_blank" rel="noreferrer">@BotFather</a>, send <code>/newbot</code> and follow the prompts. Copy the <b>token</b> it gives you.</li>
-          <li>Paste the token below, then open your new bot in Telegram and send it any message (e.g. “hi”).</li>
-          <li>Press <b>Detect my chat</b>, then <b>Save</b> and <b>Send test</b>.</li>
+          <li>In Telegram, open <a href="https://t.me/BotFather" target="_blank" rel="noreferrer">@BotFather</a>, send <code>/newbot</code> and follow the prompts. Copy the <b>token</b> it gives you and paste it below.</li>
+          <li>Everyone who should get alerts (you, your girlfriend…) opens the bot in Telegram{botName ? <> — <a href={`https://t.me/${botName}`} target="_blank" rel="noreferrer">t.me/{botName}</a> — </> : ' '}and presses <b>Start</b> (or sends any message).</li>
+          <li>Press <b>Detect people</b>, add each person, then <b>Save</b> and <b>Send test</b>.</li>
         </ol>
         <div className="form-grid">
           <Field label="Bot token">
             <input className="input mono" type="password" autoComplete="off" value={tg.bot_token} placeholder="123456789:AA…"
               onChange={(e) => set((d) => { d.channels.telegram.bot_token = e.target.value.trim() })} />
           </Field>
-          <Field label="Chat id" hint={botName ? `Bot: @${botName}` : 'Filled in by “Detect my chat”'}>
-            <div className="input-row">
-              <input className="input mono" value={tg.chat_id} onChange={(e) => set((d) => { d.channels.telegram.chat_id = e.target.value.trim() })} />
-              <button className="btn" disabled={!tg.bot_token || detect.isPending} onClick={() => detect.mutate()}>Detect my chat</button>
-            </div>
-          </Field>
+          <div className="pad-top">
+            <button className="btn" disabled={!tg.bot_token || detect.isPending} onClick={() => detect.mutate()}>
+              {detect.isPending ? 'Looking…' : '🔍 Detect people'}
+            </button>
+            {botName && <span className="muted small"> bot: @{botName}</span>}
+          </div>
         </div>
-        {chats && chats.length > 1 && (
+        {chats && chats.length > 0 && (
           <div className="pick-list">
+            <span className="muted small">New people who messaged the bot — click to add:</span>
             {chats.map((c) => (
-              <button key={c.id} className="pick" onClick={() => set((d) => { d.channels.telegram.chat_id = c.id; d.channels.telegram.enabled = true })}>
-                <span>{c.name}</span><span className="muted small">{c.type} · {c.id}</span>
+              <button key={c.id} className="pick" onClick={() => addRecipient(c)}>
+                <span>➕ {c.name}</span><span className="muted small">{c.type} · {c.id}</span>
               </button>
             ))}
           </div>
         )}
+        <div>
+          <div className="field-label">Recipients ({tg.recipients.length})</div>
+          {tg.recipients.length === 0 ? (
+            <p className="muted small">Nobody yet — use “Detect people”.</p>
+          ) : (
+            <div className="table-wrap">
+              <table className="table">
+                <tbody>
+                  {tg.recipients.map((r, i) => (
+                    <tr key={r.id}>
+                      <td><Toggle checked={r.enabled} onChange={(v) => set((d) => { d.channels.telegram.recipients[i].enabled = v })} title="Receives alerts" /></td>
+                      <td>
+                        <input className="input" value={r.name} aria-label="Name"
+                          onChange={(e) => set((d) => { d.channels.telegram.recipients[i].name = e.target.value })} />
+                      </td>
+                      <td className="muted small mono hide-sm">{r.id}</td>
+                      <td className="nowrap">
+                        <ChannelTest channel="telegram" settings={tg} target={r.id} label="Test" />
+                        <button className="btn-icon" title="Remove" onClick={() => set((d) => { d.channels.telegram.recipients.splice(i, 1) })}>✕</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
         <div className="row-between">
           <Toggle checked={tg.enabled} onChange={(v) => set((d) => { d.channels.telegram.enabled = v })} label="Send alerts to Telegram" />
-          <ChannelTest channel="telegram" settings={tg} />
+          <ChannelTest channel="telegram" settings={tg} label="Send test to everyone" />
         </div>
       </section>
 
@@ -227,6 +324,8 @@ export default function SettingsPage() {
           <textarea className="input mono" rows={8} value={keywords} onChange={(e) => setKeywords(e.target.value)} />
         </Field>
       </section>
+
+      <TransferSection />
 
       {dirty && (
         <div className="sticky-save">

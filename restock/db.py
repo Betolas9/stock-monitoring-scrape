@@ -207,6 +207,8 @@ MIGRATIONS = [
     # updates without overwriting fields the user changed in the UI
     ("stores", "seed_json", "TEXT"),
     ("sets", "seed_json", "TEXT"),
+    # recipient within a channel (Telegram chat id); NULL = the channel's only target
+    ("notifications", "target", "TEXT"),
 ]
 
 

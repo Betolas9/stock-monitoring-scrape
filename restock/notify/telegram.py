@@ -58,10 +58,15 @@ def render(payload: dict) -> list[str]:
     return chunks
 
 
-def send(payload: dict, cfg: dict) -> None:
-    token, chat_id = cfg.get("bot_token", "").strip(), str(cfg.get("chat_id", "")).strip()
+def recipients(cfg: dict) -> list[dict]:
+    return [r for r in cfg.get("recipients") or [] if r.get("enabled", True) and str(r.get("id", "")).strip()]
+
+
+def send(payload: dict, cfg: dict, target: str | None = None) -> None:
+    token = cfg.get("bot_token", "").strip()
+    chat_id = str(target or "").strip()
     if not token or not chat_id:
-        raise NotifyError("Telegram bot token / chat id not configured")
+        raise NotifyError("Telegram bot token / recipient not configured")
     items = payload.get("items") or []
     texts = render(payload)
     # Single item with a picture → photo message (much nicer on the phone)

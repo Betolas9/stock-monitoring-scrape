@@ -19,7 +19,8 @@ DEFAULTS: dict[str, Any] = {
     },
     "ignore_keywords": [],
     "channels": {
-        "telegram": {"enabled": False, "bot_token": "", "chat_id": ""},
+        # recipients: [{"id": chat id, "name": "...", "enabled": true}] — each gets every alert
+        "telegram": {"enabled": False, "bot_token": "", "recipients": []},
         "discord":  {"enabled": False, "webhook_url": "", "mention": ""},
         "windows":  {"enabled": True},
     },
@@ -70,6 +71,10 @@ def _upgrade(saved: dict) -> dict:
         n = int(alerts.get("store_failure_after") or 0)
         alerts["store_health"] = {"enabled": n > 0, "after_failures": n or 5}
     alerts.pop("store_failure_after", None)
+    tg = (saved.get("channels") or {}).get("telegram") or {}
+    if tg.get("chat_id") and not tg.get("recipients"):
+        tg["recipients"] = [{"id": str(tg["chat_id"]), "name": "Me", "enabled": True}]
+    tg.pop("chat_id", None)
     return saved
 
 

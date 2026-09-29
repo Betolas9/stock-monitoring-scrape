@@ -67,6 +67,7 @@ def put_settings(patch: dict):
 class TestBody(BaseModel):
     channel: str
     settings: dict | None = None  # unsaved channel config from the form
+    target: str | None = None     # one Telegram recipient; default: all enabled ones
 
 
 @router.post("/settings/test")
@@ -85,13 +86,22 @@ def test_channel(body: TestBody):
             "preorder": False, "in_stock": True,
         }],
     }
-    try:
-        notify.send_now(body.channel, payload, cfg)
-    except NotifyError as e:
-        return {"ok": False, "error": str(e)}
-    except Exception as e:  # noqa: BLE001
-        return {"ok": False, "error": f"{type(e).__name__}: {e}"}
-    return {"ok": True}
+    targets: list[str | None] = [None]
+    if body.channel == "telegram":
+        targets = [body.target] if body.target else             [str(r["id"]) for r in notify.telegram.recipients(cfg["channels"]["telegram"])]
+        if not targets:
+            return {"ok": False, "error": "add a recipient first"}
+    errors = []
+    for target in targets:
+        try:
+            notify.send_now(body.channel, payload, cfg, target)
+        except NotifyError as e:
+            errors.append(f"{target}: {e}" if target else str(e))
+        except Exception as e:  # noqa: BLE001
+            errors.append(f"{type(e).__name__}: {e}")
+    if errors:
+        return {"ok": False, "error": "; ".join(errors)}
+    return {"ok": True, "sent": len(targets)}
 
 
 class TelegramDetect(BaseModel):
