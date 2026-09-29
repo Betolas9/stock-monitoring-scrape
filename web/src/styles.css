@@ -369,3 +369,7 @@ textarea.input { resize: vertical; }
 .toast { padding: 10px 14px; border-radius: 10px; background: var(--surface-3); border: 1px solid var(--border); box-shadow: var(--shadow); font-size: 0.9rem; animation: slide 0.18s ease-out; }
 .toast-error { border-color: var(--bad); }
 @keyframes slide { from { transform: translateY(8px); opacity: 0; } }
+
+.detected { margin: 0; box-shadow: none; border-color: color-mix(in srgb, var(--accent) 50%, var(--border)); gap: 8px; }
+.add-row { margin-top: 8px; }
+.add-row .input { max-width: 260px; }

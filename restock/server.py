@@ -7,7 +7,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from . import APP_NAME, __version__, bootstrap, runtime
+from . import APP_NAME, __version__, bootstrap, runtime, webbuild
 from .api import router as api_router
 from .notify import Dispatcher
 from .paths import WEB_DIST
@@ -42,6 +42,9 @@ def create_app(run_scheduler: bool = True) -> FastAPI:
         return JSONResponse(status_code=500, content={"detail": f"{type(exc).__name__}: {exc}"})
 
     index = WEB_DIST / "index.html"
+    if webbuild.is_stale():
+        logger.warning("The web UI in web/dist is older than its source (e.g. after a git pull): the pages you see "
+                       "may be outdated. Run start.bat, or `npm run build` in web/, to rebuild it.")
     if (WEB_DIST / "assets").is_dir():
         app.mount("/assets", StaticFiles(directory=WEB_DIST / "assets"), name="assets")
 

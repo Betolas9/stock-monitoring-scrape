@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api'
-import type { Settings } from '../types'
+import type { Settings, TelegramRecipient } from '../types'
 import { useMeta } from '../hooks'
 import { Field, Spinner, Toggle } from '../components/ui'
 import { toast } from '../components/Toaster'
@@ -87,17 +87,18 @@ export default function SettingsPage() {
   const [botName, setBotName] = useState<string | null>(null)
 
   useEffect(() => {
-    if (saved) {
+    if (saved && !s) {
       setS(structuredClone(saved))
       setKeywords(saved.ignore_keywords.join('\n'))
     }
-  }, [saved])
+  }, [saved, s])
 
   const save = useMutation({
     mutationFn: () => api.put<Settings>('/settings', { ...s, ignore_keywords: keywords.split('\n').map((k) => k.trim()).filter(Boolean) }),
-    onSuccess: () => {
+    onSuccess: (next) => {
       toast('Settings saved')
-      qc.invalidateQueries({ queryKey: ['settings'] })
+      qc.setQueryData(['settings'], next)
+      setS(structuredClone(next))
       qc.invalidateQueries({ queryKey: ['summary'] })
     },
     onError: (e: Error) => toast(e.message, 'error'),
@@ -118,14 +119,40 @@ export default function SettingsPage() {
       }
     },
   })
-  const addRecipient = (c: Chat) => {
-    set((d) => {
-      d.channels.telegram.recipients.push({ id: c.id, name: c.name, enabled: true })
-      d.channels.telegram.enabled = true
+  // Recipients are saved immediately on every change (no Save button needed)
+  const saveRecipients = useMutation({
+    mutationFn: (recipients: TelegramRecipient[]) => api.put<Settings>('/settings', {
+      channels: { telegram: {
+        recipients,
+        bot_token: s?.channels.telegram.bot_token ?? '',
+        enabled: recipients.length ? true : s?.channels.telegram.enabled ?? false,
+      } },
+    }),
+    onSuccess: (next) => {
+      qc.setQueryData(['settings'], next)
+      setS((prev) => prev && ({ ...prev, channels: { ...prev.channels, telegram: structuredClone(next.channels.telegram) } }))
+      qc.invalidateQueries({ queryKey: ['summary'] })
+    },
+    onError: (e: Error) => toast(e.message, 'error'),
+  })
+  const recipientsNow = () => structuredClone(s?.channels.telegram.recipients ?? [])
+  const addRecipients = (people: Chat[]) => {
+    const list = recipientsNow()
+    const known = new Set(list.map((r) => r.id))
+    const added = people.filter((c) => !known.has(c.id))
+    if (!added.length) return
+    saveRecipients.mutate([...list, ...added.map((c) => ({ id: c.id, name: c.name, enabled: true }))], {
+      onSuccess: () => toast(`Added ${added.map((c) => c.name).join(', ')} — they now get every alert`),
     })
-    setChats((xs) => (xs ?? []).filter((x) => x.id !== c.id))
-    toast(`${c.name} added — press Save`)
+    setChats((xs) => (xs ?? []).filter((x) => !added.some((a) => a.id === x.id)))
   }
+  const updateRecipient = (id: string, patch: Partial<TelegramRecipient>) =>
+    saveRecipients.mutate(recipientsNow().map((r) => (r.id === id ? { ...r, ...patch } : r)))
+  const removeRecipient = (r: TelegramRecipient) => {
+    if (!window.confirm(`Stop sending alerts to ${r.name}?`)) return
+    saveRecipients.mutate(recipientsNow().filter((x) => x.id !== r.id), { onSuccess: () => toast(`${r.name} removed`) })
+  }
+  const [manual, setManual] = useState({ name: '', id: '' })
 
   if (isLoading || !s) return <div className="page"><Spinner /></div>
   const set = (fn: (d: Settings) => void) => setS((prev) => { const d = structuredClone(prev!); fn(d); return d })
@@ -149,10 +176,10 @@ export default function SettingsPage() {
         <ol className="steps small">
           <li>In Telegram, open <a href="https://t.me/BotFather" target="_blank" rel="noreferrer">@BotFather</a>, send <code>/newbot</code> and follow the prompts. Copy the <b>token</b> it gives you and paste it below.</li>
           <li>Everyone who should get alerts (you, your girlfriend…) opens the bot in Telegram{botName ? <> — <a href={`https://t.me/${botName}`} target="_blank" rel="noreferrer">t.me/{botName}</a> — </> : ' '}and presses <b>Start</b> (or sends any message).</li>
-          <li>Press <b>Detect people</b>, add each person, then <b>Save</b> and <b>Send test</b>.</li>
+          <li>Press <b>Detect people</b> and <b>Add</b> the people it finds (saved right away), then <b>Test</b>.</li>
         </ol>
         <div className="form-grid">
-          <Field label="Bot token">
+          <Field label="Bot token" hint={tg.bot_token === saved?.channels.telegram.bot_token ? undefined : 'Not saved yet — press Save changes at the top'}>
             <input className="input mono" type="password" autoComplete="off" value={tg.bot_token} placeholder="123456789:AA…"
               onChange={(e) => set((d) => { d.channels.telegram.bot_token = e.target.value.trim() })} />
           </Field>
@@ -163,35 +190,41 @@ export default function SettingsPage() {
             {botName && <span className="muted small"> bot: @{botName}</span>}
           </div>
         </div>
+
         {chats && chats.length > 0 && (
-          <div className="pick-list">
-            <span className="muted small">New people who messaged the bot — click to add:</span>
+          <div className="card section detected">
+            <div className="row-between">
+              <b>Found {chats.length} new {chats.length === 1 ? 'person' : 'people'} who messaged the bot</b>
+              {chats.length > 1 && <button className="btn btn-sm btn-primary" onClick={() => addRecipients(chats)}>Add all</button>}
+            </div>
             {chats.map((c) => (
-              <button key={c.id} className="pick" onClick={() => addRecipient(c)}>
-                <span>➕ {c.name}</span><span className="muted small">{c.type} · {c.id}</span>
-              </button>
+              <div key={c.id} className="row-between">
+                <span>{c.name} <span className="muted small">{c.type} · {c.id}</span></span>
+                <button className="btn btn-sm btn-primary" disabled={saveRecipients.isPending} onClick={() => addRecipients([c])}>➕ Add</button>
+              </div>
             ))}
           </div>
         )}
+
         <div>
-          <div className="field-label">Recipients ({tg.recipients.length})</div>
+          <div className="field-label">Recipients ({tg.recipients.length}) — everyone switched on gets every alert</div>
           {tg.recipients.length === 0 ? (
-            <p className="muted small">Nobody yet — use “Detect people”.</p>
+            <p className="muted small">Nobody yet — use “Detect people”, or add a chat id below.</p>
           ) : (
             <div className="table-wrap">
               <table className="table">
                 <tbody>
-                  {tg.recipients.map((r, i) => (
+                  {tg.recipients.map((r) => (
                     <tr key={r.id}>
-                      <td><Toggle checked={r.enabled} onChange={(v) => set((d) => { d.channels.telegram.recipients[i].enabled = v })} title="Receives alerts" /></td>
+                      <td><Toggle checked={r.enabled} onChange={(v) => updateRecipient(r.id, { enabled: v })} title="Receives alerts" /></td>
                       <td>
-                        <input className="input" value={r.name} aria-label="Name"
-                          onChange={(e) => set((d) => { d.channels.telegram.recipients[i].name = e.target.value })} />
+                        <input className="input" defaultValue={r.name} aria-label="Name"
+                          onBlur={(e) => { const name = e.target.value.trim(); if (name && name !== r.name) updateRecipient(r.id, { name }) }} />
                       </td>
                       <td className="muted small mono hide-sm">{r.id}</td>
                       <td className="nowrap">
                         <ChannelTest channel="telegram" settings={tg} target={r.id} label="Test" />
-                        <button className="btn-icon" title="Remove" onClick={() => set((d) => { d.channels.telegram.recipients.splice(i, 1) })}>✕</button>
+                        <button className="btn btn-sm btn-danger" onClick={() => removeRecipient(r)}>Remove</button>
                       </td>
                     </tr>
                   ))}
@@ -199,6 +232,15 @@ export default function SettingsPage() {
               </table>
             </div>
           )}
+          <div className="input-row add-row">
+            <input className="input" placeholder="Name" value={manual.name} onChange={(e) => setManual({ ...manual, name: e.target.value })} />
+            <input className="input mono" placeholder="Chat id (e.g. 123456789)" value={manual.id}
+              onChange={(e) => setManual({ ...manual, id: e.target.value.trim() })} />
+            <button className="btn" disabled={!/^-?\d+$/.test(manual.id) || saveRecipients.isPending}
+              onClick={() => { addRecipients([{ id: manual.id, name: manual.name.trim() || manual.id, type: 'private' }]); setManual({ name: '', id: '' }) }}>
+              ➕ Add
+            </button>
+          </div>
         </div>
         <div className="row-between">
           <Toggle checked={tg.enabled} onChange={(v) => set((d) => { d.channels.telegram.enabled = v })} label="Send alerts to Telegram" />
